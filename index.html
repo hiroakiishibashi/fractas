@@ -55,6 +55,42 @@
             letter-spacing: 0.08em;
             color: rgba(255,255,255,0.82);
         }
+        .best-score-box {
+            font-size: clamp(0.75rem, 1.8vw, 0.95rem);
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.65);
+            margin-top: 2px;
+        }
+        #audioToggleBtn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 50%;
+            width: 38px;
+            height: 38px;
+            color: #fff;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            pointer-events: auto;
+            transition: background 0.2s, transform 0.15s;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        #audioToggleBtn:hover {
+            background: rgba(255, 255, 255, 0.22);
+            transform: scale(1.08);
+        }
+        #audioToggleBtn:active {
+            transform: scale(0.95);
+        }
+        #audioToggleBtn.muted {
+            opacity: 0.5;
+            background: rgba(0, 0, 0, 0.4);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
         .chain-box {
             display: none;
             font-size: 2.5rem;
@@ -178,46 +214,133 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            gap: 14px;
-            padding: 24px;
+            padding: 20px;
             box-sizing: border-box;
             text-align: center;
-            background: radial-gradient(ellipse at center, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.92) 100%);
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0.95) 100%);
             font-family: var(--fractas-script-font);
         }
         #gameOver.active {
             display: flex;
         }
-        #gameOver .game-over-title {
-            font-size: clamp(2rem, 8vw, 4rem);
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            color: #fb7185;
-            text-shadow: 0 0 32px rgba(251,113,133,0.75);
+        .game-over-card {
+            background: rgba(15, 15, 25, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 16px;
+            padding: 28px 36px;
+            max-width: 420px;
+            width: 90%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+            pointer-events: auto;
         }
-        #gameOver .game-over-score {
-            font-size: clamp(1.1rem, 4vw, 1.6rem);
+        .game-over-title {
+            font-size: clamp(2.2rem, 7vw, 3.4rem);
+            font-weight: 900;
+            letter-spacing: 0.1em;
+            color: #fb7185;
+            text-shadow: 0 0 24px rgba(251,113,133,0.6);
+            margin: 0;
+        }
+        .new-best-badge {
+            display: none;
+            background: linear-gradient(135deg, #facc15, #f59e0b);
+            color: #000;
+            font-weight: 800;
+            font-size: 0.85rem;
+            letter-spacing: 0.12em;
+            padding: 4px 14px;
+            border-radius: 999px;
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.6);
+            animation: pulseBadge 1.2s infinite alternate ease-in-out;
+        }
+        .new-best-badge.active {
+            display: inline-block;
+        }
+        @keyframes pulseBadge {
+            0% { transform: scale(1); }
+            100% { transform: scale(1.08); }
+        }
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            width: 100%;
+            margin-top: 4px;
+        }
+        .stat-item {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 10px 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .stat-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.08em;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 600;
+        }
+        .stat-val {
+            font-size: clamp(1.1rem, 3.5vw, 1.5rem);
             font-weight: 800;
             color: #ffffff;
+            margin-top: 2px;
         }
-        #gameOver .game-over-sub {
-            font-size: clamp(0.8rem, 3vw, 1rem);
-            color: rgba(255,255,255,0.72);
-            font-weight: 600;
+        .stat-val.highlight {
+            color: #c084fc;
+        }
+        .restart-btn {
+            margin-top: 8px;
+            background: linear-gradient(135deg, #c084fc, #9333ea);
+            color: #ffffff;
+            border: none;
+            border-radius: 999px;
+            padding: 12px 32px;
+            font-size: 1.1rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            cursor: pointer;
+            font-family: inherit;
+            box-shadow: 0 4px 18px rgba(192, 132, 252, 0.4);
+            transition: transform 0.15s, box-shadow 0.15s, background 0.2s;
+            pointer-events: auto;
+        }
+        .restart-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 24px rgba(192, 132, 252, 0.6);
+            background: linear-gradient(135deg, #d8b4fe, #a855f7);
+        }
+        .restart-btn:active {
+            transform: scale(0.97);
+        }
+        .game-over-sub {
+            font-size: clamp(0.72rem, 2.4vw, 0.85rem);
+            color: rgba(255,255,255,0.5);
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
 
-    <div id="uiLayer" style="color: #ffffff;">
+    <div id="uiLayer" style="color: #ffffff; justify-content: space-between;">
         <div class="left-panel">
             <div class="score-box">SCORE: <span id="scoreVal">0</span></div>
+            <div class="best-score-box">BEST: <span id="bestScoreVal">0</span></div>
             <div class="chain-box" id="chainContainer"><span id="chainVal">0</span> CHAIN!!</div>
         </div>
-        <div class="right-panel">
-            <div class="timer-box" id="turnContainer">TURNS: <span id="turnVal">0</span>/<span id="turnMaxVal">3</span></div>
-            <div class="theme-box" id="colorContainer">COLORS: <span id="colorCountVal">3</span></div>
-            <div class="theme-box" id="themeContainer">THEME: <span id="themeVal">COSMIC</span></div>
+        <div style="display: flex; align-items: flex-start; gap: 14px;">
+            <div class="right-panel">
+                <div class="timer-box" id="turnContainer">TURNS: <span id="turnVal">0</span>/<span id="turnMaxVal">3</span></div>
+                <div class="theme-box" id="colorContainer">COLORS: <span id="colorCountVal">3</span></div>
+                <div class="theme-box" id="themeContainer">THEME: <span id="themeVal">COSMIC</span></div>
+            </div>
+            <button id="audioToggleBtn" title="Toggle Sound" aria-label="Toggle Sound">🔊</button>
         </div>
     </div>
 
@@ -236,10 +359,31 @@
         <div class="hint-sub">Make 3 moves. If nothing matches, it is game over.</div>
     </div>
 
-        <div id="gameOver">
-        <div class="game-over-title">GAME OVER</div>
-        <div class="game-over-score">FINAL SCORE: <span id="finalScoreVal">0</span></div>
-        <div class="game-over-sub">No matches found. Tap or click to restart.</div>
+    <div id="gameOver">
+        <div class="game-over-card">
+            <div class="game-over-title">GAME OVER</div>
+            <div id="newBestBadge" class="new-best-badge">NEW HIGH SCORE!</div>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <span class="stat-label">FINAL SCORE</span>
+                    <span class="stat-val highlight" id="finalScoreVal">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">BEST SCORE</span>
+                    <span class="stat-val" id="finalBestScoreVal">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">TOTAL MOVES</span>
+                    <span class="stat-val" id="statMovesVal">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">SCANS SURVIVED</span>
+                    <span class="stat-val" id="statScansVal">0</span>
+                </div>
+            </div>
+            <button id="restartBtn" class="restart-btn">PLAY AGAIN</button>
+            <div class="game-over-sub">or press Space / Tap anywhere</div>
+        </div>
     </div>
 
     <script>
@@ -351,8 +495,60 @@
         let lastDialTickStep = null;
         let lastDialTickTime = 0;
         let lastLightSfxTime = 0;
+        let highScore = 0;
+        let gamesPlayed = 0;
+        let isMuted = false;
         window.__fractasAudioState = (window.AudioContext || window.webkitAudioContext) ? 'ready' : 'unsupported';
         window.__fractasSpeechState = ('speechSynthesis' in window) ? 'ready' : 'unsupported';
+
+        function loadSavedData() {
+            try {
+                const savedHigh = localStorage.getItem('fractas_high_score');
+                if (savedHigh !== null) highScore = parseInt(savedHigh, 10) || 0;
+                
+                const savedMute = localStorage.getItem('fractas_muted');
+                if (savedMute !== null) isMuted = savedMute === 'true';
+
+                const savedGames = localStorage.getItem('fractas_games_played');
+                if (savedGames !== null) gamesPlayed = parseInt(savedGames, 10) || 0;
+            } catch(e) {}
+            updateHighScoreUI();
+            updateAudioBtnUI();
+        }
+
+        function updateHighScoreUI() {
+            const bestEl = document.getElementById('bestScoreVal');
+            if (bestEl) bestEl.innerText = highScore.toLocaleString();
+        }
+
+        function updateAudioBtnUI() {
+            const btn = document.getElementById('audioToggleBtn');
+            if (!btn) return;
+            if (isMuted) {
+                btn.innerHTML = '🔇';
+                btn.classList.add('muted');
+                btn.title = 'Unmute Sound';
+            } else {
+                btn.innerHTML = '🔊';
+                btn.classList.remove('muted');
+                btn.title = 'Mute Sound';
+            }
+        }
+
+        function toggleMute(e) {
+            if (e) {
+                if (e.stopPropagation) e.stopPropagation();
+                if (e.preventDefault && e.type === 'touchstart') e.preventDefault();
+            }
+            isMuted = !isMuted;
+            try {
+                localStorage.setItem('fractas_muted', isMuted);
+            } catch(e) {}
+            if (audioMaster) {
+                audioMaster.gain.value = isMuted ? 0 : 0.32;
+            }
+            updateAudioBtnUI();
+        }
 
         function cellKey(r, s) {
             return `${r}:${s}`;
@@ -364,7 +560,6 @@
         function resize() {
             const rawWidth = window.innerWidth;
             const rawHeight = window.innerHeight;
-            // 軽量化: 解像度スケールを最大 1.0 に制限して描画ピクセル数を削減
             const dpr = Math.min(1.0, window.devicePixelRatio || 1);
             width = rawWidth;
             height = rawHeight;
@@ -419,7 +614,7 @@
             audioCtx = new AudioClass();
             window.__fractasAudioState = audioCtx.state;
             audioMaster = audioCtx.createGain();
-            audioMaster.gain.value = 0.32;
+            audioMaster.gain.value = isMuted ? 0 : 0.32;
             audioMaster.connect(audioCtx.destination);
 
             const pad = audioCtx.createGain();
@@ -572,6 +767,7 @@
         }
 
         function speakTurnPrompt(remaining) {
+            if (isMuted) return;
             if (!('speechSynthesis' in window)) {
                 window.__fractasSpeechState = 'unsupported';
                 return;
@@ -602,9 +798,41 @@
             updateTurnUI();
             reportScore(true);
 
+            let isNewBest = false;
+            if (score > highScore) {
+                highScore = score;
+                isNewBest = true;
+                try {
+                    localStorage.setItem('fractas_high_score', highScore);
+                } catch(e) {}
+                updateHighScoreUI();
+            }
+
+            gamesPlayed++;
+            try {
+                localStorage.setItem('fractas_games_played', gamesPlayed);
+            } catch(e) {}
+
             const finalScoreEl = document.getElementById('finalScoreVal');
+            const finalBestEl = document.getElementById('finalBestScoreVal');
+            const statMovesEl = document.getElementById('statMovesVal');
+            const statScansEl = document.getElementById('statScansVal');
+            const newBestBadge = document.getElementById('newBestBadge');
             const gameOverEl = document.getElementById('gameOver');
+
             if (finalScoreEl) finalScoreEl.innerText = score.toLocaleString();
+            if (finalBestEl) finalBestEl.innerText = highScore.toLocaleString();
+            if (statMovesEl) statMovesEl.innerText = totalTurns.toLocaleString();
+            if (statScansEl) statScansEl.innerText = checkCount.toLocaleString();
+
+            if (newBestBadge) {
+                if (isNewBest && score > 0) {
+                    newBestBadge.classList.add('active');
+                } else {
+                    newBestBadge.classList.remove('active');
+                }
+            }
+
             if (gameOverEl) gameOverEl.classList.add('active');
         }
 
@@ -1906,6 +2134,28 @@
             }, { passive: false });
         }
 
+        const restartBtnEl = document.getElementById('restartBtn');
+        if (restartBtnEl) {
+            restartBtnEl.addEventListener('click', (e) => {
+                e.stopPropagation();
+                resetGame();
+            });
+        }
+
+        const audioBtnEl = document.getElementById('audioToggleBtn');
+        if (audioBtnEl) {
+            audioBtnEl.addEventListener('click', toggleMute);
+            audioBtnEl.addEventListener('touchstart', toggleMute, { passive: false });
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if (isGameOver && (e.code === 'Space' || e.code === 'Enter')) {
+                e.preventDefault();
+                resetGame();
+            }
+        });
+
+        loadSavedData();
         resetGame();
 
     </script>
