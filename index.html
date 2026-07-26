@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="page-title" content="Fractas">
-    <meta name="description" content="Fractas — an expanding connected square cluster puzzle. Drag squares to attach to edges and match 4 same-sized squares into 2×2 blocks to clear.">
+    <meta name="description" content="Fractas — an expanding connected square cluster puzzle. Drag squares along connected edges and match 4 same-sized squares into 2×2 blocks to clear.">
     <title>Fractas</title>
     <style>
         :root {
@@ -121,15 +121,15 @@
             gap: 8px;
         }
         .timer-box {
-            font-size: 2rem;
+            font-size: 1.6rem;
             font-weight: 900;
             color: #ffffff;
             letter-spacing: 0.03em;
             transition: color 0.2s, transform 0.2s;
         }
         .timer-box.warning {
-            color: #facc15;
-            transform: scale(1.04);
+            color: #fb7185;
+            transform: scale(1.06);
         }
         #brand {
             position: absolute;
@@ -321,7 +321,7 @@
         </div>
         <div style="display: flex; align-items: flex-start; gap: 14px;">
             <div class="right-panel">
-                <div class="timer-box" id="turnContainer">TURNS: <span id="turnVal">0</span>/<span id="turnMaxVal">3</span></div>
+                <div class="timer-box" id="growthTimerBox">GROWTH: <span id="growthTimerVal">3.5</span>s</div>
                 <div class="theme-box" id="colorContainer">COLORS: <span id="colorCountVal">3</span></div>
                 <div class="theme-box" id="themeContainer">THEME: <span id="themeVal">COSMIC</span></div>
             </div>
@@ -336,12 +336,12 @@
     <div id="hint">
         <div class="hint-title">FRACTAS</div>
         <div class="hint-row">
-            <span class="hint-chip">🖱 Drag squares — slides smoothly along connected edges</span>
+            <span class="hint-chip">🖱 Drag squares along connected edges (Always attached to CORE cluster)</span>
         </div>
         <div class="hint-row">
             <span class="hint-chip">⏹ Match 4 same-sized squares into 2×2 to clear!</span>
         </div>
-        <div class="hint-sub">Make 3 moves. Squares grow & expand the cluster continuously.</div>
+        <div class="hint-sub">Blocks grow automatically over time. Don't let the cluster reach the edge!</div>
     </div>
 
     <div id="gameOver">
@@ -377,11 +377,14 @@
         let width, height, cx, cy;
 
         // --- ゲーム定数・設定 ---
-        const TURNS_PER_CHECK = 3;
         const START_COLOR_COUNT = 3;
         const MAX_COLOR_COUNT = 6;
         const GRID_LIMIT = 8; // 最大グリッド範囲（中心から±8セル）
         let GRID_CELL_SIZE = 40;
+
+        // 自動継続成長タイマー（ミリ秒）
+        const AUTO_GROWTH_INTERVAL_MS = 3600;
+        let autoGrowthTimer = 0;
 
         const THEMES = {
             'COSMIC': { name: 'COSMIC', textColor: '#c084fc', colors: [{h: 220, s: 80, l: 40}, {h: 240, s: 90, l: 60}, {h: 260, s: 85, l: 70}, {h: 280, s: 90, l: 50}, {h: 300, s: 100, l: 60}, {h: 190, s: 70, l: 50}] },
@@ -397,7 +400,6 @@
         let blocks = [];
         let nextBlockId = 1;
         let score = 0;
-        let turnCount = 0;
         let totalTurns = 0;
         let checkCount = 0;
         let activeColorCount = START_COLOR_COUNT;
@@ -420,7 +422,6 @@
         let audioCtx = null;
         let audioMaster = null;
         let audioStarted = false;
-        let preferredSpeechVoice = null;
 
         function loadSavedData() {
             try {
@@ -499,6 +500,39 @@
             return vertEdge || horizEdge;
         }
 
+        // グラフ接続検証（すべてのブロックがCOREに繋がっている単一クラスタであるかを検証）
+        function isFullyConnectedCluster(testBlocks) {
+            if (testBlocks.length === 0) return true;
+            
+            const visited = new Set();
+            const queue = [];
+            const core = { gx: -1, gy: -1, size: 2, id: 'CORE' };
+            
+            // COREに直に「辺」で接しているブロックを起点にする
+            for (let b of testBlocks) {
+                if (hasEdgeContact(b.gx, b.gy, b.size, core.gx, core.gy, core.size)) {
+                    visited.add(b.id);
+                    queue.push(b);
+                }
+            }
+            
+            // BFS探索
+            while (queue.length > 0) {
+                const curr = queue.shift();
+                for (let b of testBlocks) {
+                    if (!visited.has(b.id)) {
+                        if (hasEdgeContact(curr.gx, curr.gy, curr.size, b.gx, b.gy, b.size)) {
+                            visited.add(b.id);
+                            queue.push(b);
+                        }
+                    }
+                }
+            }
+            
+            // 全ブロックがCOREから辿れる（単一クラスタを維持している）場合のみtrue
+            return visited.size === testBlocks.length;
+        }
+
         // 指定位置(testGx, testGy)にブロックを配置可能か検証
         function isValidPosition(block, testGx, testGy, ignoreId = null) {
             const size = block.size;
@@ -514,18 +548,79 @@
                     return false;
                 }
             }
-            // 必ず「辺（LINE EDGE）」で他ブロックまたはコアに密着していること！
-            let isEdgeConnected = hasEdgeContact(testGx, testGy, size, -1, -1, 2);
-            if (!isEdgeConnected) {
+
+            // 仮配置後の全ブロック集合を作成
+            const testCandidateBlocks = [];
+            for (let b of blocks) {
+                if (b.id === ignoreId || b.clearing) continue;
+                testCandidateBlocks.push(b);
+            }
+            testCandidateBlocks.push({ id: block.id, gx: testGx, gy: testGy, size: size });
+
+            // 孤立島が発生しないか（すべてCOREと一続きであるか）検証！
+            return isFullyConnectedCluster(testCandidateBlocks);
+        }
+
+        // ブロックが消去等で浮いた場合、CORE方向へ密着引き寄せする重力補正
+        function compactClusterTowardsCore() {
+            let movedAny = true;
+            let passes = 0;
+            const core = { gx: -1, gy: -1, size: 2 };
+
+            while (movedAny && passes < 8) {
+                movedAny = false;
+                passes++;
+
+                const connected = new Set();
+                const queue = [];
+
                 for (let b of blocks) {
-                    if (b.id === ignoreId || b.clearing) continue;
-                    if (hasEdgeContact(testGx, testGy, size, b.gx, b.gy, b.size)) {
-                        isEdgeConnected = true;
-                        break;
+                    if (!b.clearing && hasEdgeContact(b.gx, b.gy, b.size, core.gx, core.gy, core.size)) {
+                        connected.add(b.id);
+                        queue.push(b);
+                    }
+                }
+
+                while (queue.length > 0) {
+                    const curr = queue.shift();
+                    for (let b of blocks) {
+                        if (!b.clearing && !connected.has(b.id)) {
+                            if (hasEdgeContact(curr.gx, curr.gy, curr.size, b.gx, b.gy, b.size)) {
+                                connected.add(b.id);
+                                queue.push(b);
+                            }
+                        }
+                    }
+                }
+
+                // 接続が切れている離れ島ブロックを中心(0,0)へ1マス引き寄せる
+                for (let b of blocks) {
+                    if (!b.clearing && !connected.has(b.id)) {
+                        const dx = b.gx > 0 ? -1 : (b.gx < -b.size ? 1 : 0);
+                        const dy = b.gy > 0 ? -1 : (b.gy < -b.size ? 1 : 0);
+
+                        const testGx = b.gx + dx;
+                        const testGy = b.gy + dy;
+
+                        if (!doesOverlap(testGx, testGy, b.size, -1, -1, 2)) {
+                            let overlap = false;
+                            for (let other of blocks) {
+                                if (other.id !== b.id && !other.clearing && doesOverlap(testGx, testGy, b.size, other.gx, other.gy, other.size)) {
+                                    overlap = true;
+                                    break;
+                                }
+                            }
+                            if (!overlap) {
+                                b.gx = testGx;
+                                b.gy = testGy;
+                                b.targetGx = testGx;
+                                b.targetGy = testGy;
+                                movedAny = true;
+                            }
+                        }
                     }
                 }
             }
-            return isEdgeConnected;
         }
 
         function createBlock(gx, gy, size = 1, colorIdx = 0) {
@@ -538,7 +633,7 @@
                 animGx: gx,
                 animGy: gy,
                 size: size,
-                displaySize: size, // じわじわ拡大用の連続値
+                displaySize: size,
                 colorIdx: colorIdx,
                 scale: 1.0,
                 clearing: false,
@@ -556,16 +651,14 @@
             }
         }
 
-        function updateTurnUI() {
-            const turnEl = document.getElementById('turnContainer');
-            const turnValEl = document.getElementById('turnVal');
-            const turnMaxEl = document.getElementById('turnMaxVal');
-            const colorCountEl = document.getElementById('colorCountVal');
-            if (!turnEl || !turnValEl || !turnMaxEl || !colorCountEl) return;
-            turnValEl.innerText = turnCount;
-            turnMaxEl.innerText = TURNS_PER_CHECK;
-            colorCountEl.innerText = activeColorCount;
-            turnEl.classList.toggle('warning', turnCount === TURNS_PER_CHECK - 1);
+        function updateGrowthTimerUI() {
+            const timerValEl = document.getElementById('growthTimerVal');
+            const timerBoxEl = document.getElementById('growthTimerBox');
+            if (!timerValEl || !timerBoxEl) return;
+
+            const remainingSec = Math.max(0, (AUTO_GROWTH_INTERVAL_MS - autoGrowthTimer) / 1000).toFixed(1);
+            timerValEl.innerText = remainingSec;
+            timerBoxEl.classList.toggle('warning', remainingSec < 1.2);
         }
 
         function startAudio() {
@@ -646,38 +739,6 @@
             playGlide(220, 80, 0.9, 'sine', 0.065);
         }
 
-        function pickSpeechVoice() {
-            if (!('speechSynthesis' in window)) return null;
-            const voices = window.speechSynthesis.getVoices();
-            if (!voices || voices.length === 0) return null;
-            const preferredNames = /(samantha|karen|victoria|serena|ava|allison|female|woman|google us english|google uk english female)/i;
-            preferredSpeechVoice =
-                voices.find(v => /^en/i.test(v.lang) && preferredNames.test(v.name)) ||
-                voices.find(v => /^en/i.test(v.lang)) ||
-                voices.find(v => preferredNames.test(v.name)) ||
-                voices[0];
-            return preferredSpeechVoice;
-        }
-
-        if ('speechSynthesis' in window) {
-            window.speechSynthesis.onvoiceschanged = () => pickSpeechVoice();
-        }
-
-        function speakTurnPrompt(remaining) {
-            if (isMuted) return;
-            if (!('speechSynthesis' in window)) return;
-            const text = remaining === 1 ? 'One move left' : (remaining > 1 ? `${remaining} moves left` : 'Cluster expansion');
-            const utterance = new SpeechSynthesisUtterance(text);
-            const voice = preferredSpeechVoice || pickSpeechVoice();
-            if (voice) utterance.voice = voice;
-            utterance.lang = voice ? voice.lang : 'en-US';
-            utterance.pitch = 1.12;
-            utterance.rate = 0.94;
-            utterance.volume = 0.28;
-            window.speechSynthesis.cancel();
-            window.speechSynthesis.speak(utterance);
-        }
-
         // 2×2正方形のマッチング判定・消去
         function checkMatches() {
             let foundMatch = false;
@@ -707,6 +768,7 @@
                             setTimeout(() => {
                                 blocks = blocks.filter(b => !matchBlocks.includes(b));
                                 isClearing = false;
+                                compactClusterTowardsCore();
                                 checkMatches();
                             }, 450);
 
@@ -729,17 +791,17 @@
             updateScoreUI();
         }
 
-        // じわじわと大きくなる成長＆辺配置スポーン
+        // 勝手にどんどん大きくなる＆コア周囲への新ブロック自動スポーン
         function growCluster() {
             checkCount++;
             playGrowSfx();
 
-            // 1. 中心に近い size=1 ブロックの目標サイズ変更 (1 -> 2)
+            // 1. 中心に近い size=1 ブロックの目標サイズを順次拡大 (1 -> 2)
             const smallBlocks = blocks.filter(b => !b.clearing && b.size === 1);
             if (smallBlocks.length > 0) {
                 smallBlocks.sort((a, b) => (a.gx*a.gx + a.gy*a.gy) - (b.gx*b.gx + b.gy*b.gy));
                 const target = smallBlocks[0];
-                target.size = 2; // targetSizeを2に変更し、update()でじわじわ大きく描画
+                target.size = 2;
 
                 for (let b of blocks) {
                     if (b.id === target.id || b.clearing) continue;
@@ -754,7 +816,7 @@
                 }
             }
 
-            // 2. 厳密に「辺」に面した位置に新ブロックをスポーン
+            // 2. コア周辺の「辺」に面した空きマスに新ブロックをスポーン
             const spawnCandidates = [
                 {gx: -2, gy: -1}, {gx: -2, gy: 0}, {gx: 1, gy: -1}, {gx: 1, gy: 0},
                 {gx: -1, gy: -2}, {gx: 0, gy: -2}, {gx: -1, gy: 1}, {gx: 0, gy: 1},
@@ -766,11 +828,13 @@
                 if (isValidPosition(dummy, cand.gx, cand.gy)) {
                     const colorIdx = Math.floor(Math.random() * activeColorCount);
                     const newB = createBlock(cand.gx, cand.gy, 1, colorIdx);
-                    newB.displaySize = 0.2; // 0.2から1.0へじわじわ成長
+                    newB.displaySize = 0.2;
                     blocks.push(newB);
                     break;
                 }
             }
+
+            compactClusterTowardsCore();
 
             for (let b of blocks) {
                 if (Math.abs(b.gx) >= GRID_LIMIT || Math.abs(b.gy) >= GRID_LIMIT) {
@@ -783,15 +847,15 @@
         function resetGame() {
             blocks = [];
             score = 0;
-            turnCount = 0;
             totalTurns = 0;
             checkCount = 0;
+            autoGrowthTimer = 0;
             activeColorCount = START_COLOR_COUNT;
             isGameOver = false;
             isClearing = false;
             chainCount = 0;
 
-            // 初期配置：厳密にコアの「辺」に接した4マス
+            // 初期配置：COREの「辺」にぴったり接した4つの1x1ブロック
             const initialCoords = [
                 {gx: -2, gy: -1, s: 1, c: 0},
                 {gx: 1, gy: 0, s: 1, c: 1},
@@ -804,7 +868,7 @@
             });
 
             updateUI();
-            updateTurnUI();
+            updateGrowthTimerUI();
             
             let uiLayer = document.getElementById('uiLayer');
             document.getElementById('themeVal').innerText = THEMES[currentThemeKey].name;
@@ -822,7 +886,6 @@
             playGameOverSfx();
             isGameOver = true;
             dragBlock = null;
-            updateTurnUI();
             reportScore(true);
 
             let isNewBest = false;
@@ -970,7 +1033,6 @@
             snapCandidate = null;
             let minDist = Number.POSITIVE_INFINITY;
 
-            // ドラッグ中も「辺に接する有効位置」のみを探索してスムーズ滑り移動
             for (let dgx = -3; dgx <= 3; dgx++) {
                 for (let dgy = -3; dgy <= 3; dgy++) {
                     const testGx = rawGx + dgx;
@@ -1004,19 +1066,8 @@
 
                 if (moved) {
                     playSnapSfx();
-                    turnCount++;
                     totalTurns++;
-                    updateTurnUI();
-
-                    const matched = checkMatches();
-                    if (!matched && turnCount >= TURNS_PER_CHECK) {
-                        turnCount = 0;
-                        updateTurnUI();
-                        growCluster();
-                        speakTurnPrompt(0);
-                    } else if (!matched) {
-                        speakTurnPrompt(TURNS_PER_CHECK - turnCount);
-                    }
+                    checkMatches();
                 }
             }
 
@@ -1122,12 +1173,21 @@
             ctx.restore();
         }
 
-        function update() {
+        let lastTimestamp = 0;
+        function update(dt) {
+            if (!isGameOver) {
+                // 自動継続成長タイマー
+                autoGrowthTimer += dt;
+                if (autoGrowthTimer >= AUTO_GROWTH_INTERVAL_MS) {
+                    autoGrowthTimer = 0;
+                    growCluster();
+                }
+                updateGrowthTimerUI();
+            }
+
             for (let b of blocks) {
-                // スムーズ位置移動（ドラッグ中も辺に沿って滑る）
                 b.animGx += (b.targetGx - b.animGx) * 0.35;
                 b.animGy += (b.targetGy - b.animGy) * 0.35;
-                // じわじわと滑らかに大きくなる補間
                 b.displaySize += (b.size - b.displaySize) * 0.08;
             }
         }
@@ -1147,7 +1207,12 @@
         }
 
         function gameLoop(timestamp) {
-            update();
+            if (!lastTimestamp) lastTimestamp = timestamp;
+            let dt = timestamp - lastTimestamp;
+            lastTimestamp = timestamp;
+            if (dt > 100) dt = 16.666;
+
+            update(dt);
             draw();
             requestAnimationFrame(gameLoop);
         }
