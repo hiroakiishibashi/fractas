@@ -321,7 +321,7 @@
         </div>
         <div style="display: flex; align-items: flex-start; gap: 14px;">
             <div class="right-panel">
-                <div class="timer-box" id="growthTimerBox">GROWTH: <span id="growthTimerVal">3.5</span>s</div>
+                <div class="timer-box" id="growthTimerBox">SPAWN IN: <span id="growthTimerVal">1.5</span>s</div>
                 <div class="theme-box" id="colorContainer">COLORS: <span id="colorCountVal">3</span></div>
                 <div class="theme-box" id="themeContainer">THEME: <span id="themeVal">COSMIC</span></div>
             </div>
@@ -341,7 +341,7 @@
         <div class="hint-row">
             <span class="hint-chip">⏹ Match 4 same-sized squares into 2×2 to clear!</span>
         </div>
-        <div class="hint-sub">Blocks grow automatically over time. Don't let the cluster reach the edge!</div>
+        <div class="hint-sub">Squares spawn automatically every 1.5s. Match 2×2 blocks fast!</div>
     </div>
 
     <div id="gameOver">
@@ -362,7 +362,7 @@
                     <span class="stat-val" id="statMovesVal">0</span>
                 </div>
                 <div class="stat-item">
-                    <span class="stat-label">GROWTH CYCLES</span>
+                    <span class="stat-label">SPAWNS SURVIVED</span>
                     <span class="stat-val" id="statScansVal">0</span>
                 </div>
             </div>
@@ -382,9 +382,10 @@
         const GRID_LIMIT = 8; // 最大グリッド範囲（中心から±8セル）
         let GRID_CELL_SIZE = 40;
 
-        // 自動継続成長タイマー（ミリ秒）
-        const AUTO_GROWTH_INTERVAL_MS = 3600;
+        // 自動高頻度スポーンタイマー（1.5秒ごとに新しい四角が自動発生！）
+        const AUTO_SPAWN_INTERVAL_MS = 1500;
         let autoGrowthTimer = 0;
+        let spawnCycleCount = 0;
 
         const THEMES = {
             'COSMIC': { name: 'COSMIC', textColor: '#c084fc', colors: [{h: 220, s: 80, l: 40}, {h: 240, s: 90, l: 60}, {h: 260, s: 85, l: 70}, {h: 280, s: 90, l: 50}, {h: 300, s: 100, l: 60}, {h: 190, s: 70, l: 50}] },
@@ -508,7 +509,6 @@
             const queue = [];
             const core = { gx: -1, gy: -1, size: 2, id: 'CORE' };
             
-            // COREに直に「辺」で接しているブロックを起点にする
             for (let b of testBlocks) {
                 if (hasEdgeContact(b.gx, b.gy, b.size, core.gx, core.gy, core.size)) {
                     visited.add(b.id);
@@ -516,7 +516,6 @@
                 }
             }
             
-            // BFS探索
             while (queue.length > 0) {
                 const curr = queue.shift();
                 for (let b of testBlocks) {
@@ -529,7 +528,6 @@
                 }
             }
             
-            // 全ブロックがCOREから辿れる（単一クラスタを維持している）場合のみtrue
             return visited.size === testBlocks.length;
         }
 
@@ -549,7 +547,6 @@
                 }
             }
 
-            // 仮配置後の全ブロック集合を作成
             const testCandidateBlocks = [];
             for (let b of blocks) {
                 if (b.id === ignoreId || b.clearing) continue;
@@ -557,7 +554,6 @@
             }
             testCandidateBlocks.push({ id: block.id, gx: testGx, gy: testGy, size: size });
 
-            // 孤立島が発生しないか（すべてCOREと一続きであるか）検証！
             return isFullyConnectedCluster(testCandidateBlocks);
         }
 
@@ -593,7 +589,6 @@
                     }
                 }
 
-                // 接続が切れている離れ島ブロックを中心(0,0)へ1マス引き寄せる
                 for (let b of blocks) {
                     if (!b.clearing && !connected.has(b.id)) {
                         const dx = b.gx > 0 ? -1 : (b.gx < -b.size ? 1 : 0);
@@ -656,9 +651,9 @@
             const timerBoxEl = document.getElementById('growthTimerBox');
             if (!timerValEl || !timerBoxEl) return;
 
-            const remainingSec = Math.max(0, (AUTO_GROWTH_INTERVAL_MS - autoGrowthTimer) / 1000).toFixed(1);
+            const remainingSec = Math.max(0, (AUTO_SPAWN_INTERVAL_MS - autoGrowthTimer) / 1000).toFixed(1);
             timerValEl.innerText = remainingSec;
-            timerBoxEl.classList.toggle('warning', remainingSec < 1.2);
+            timerBoxEl.classList.toggle('warning', remainingSec < 0.6);
         }
 
         function startAudio() {
@@ -731,7 +726,7 @@
 
         function playGrowSfx() {
             startAudio();
-            playGlide(180, 360, 0.35, 'sine', 0.05);
+            playGlide(220, 480, 0.28, 'sine', 0.045);
         }
 
         function playGameOverSfx() {
@@ -791,38 +786,43 @@
             updateScoreUI();
         }
 
-        // 勝手にどんどん大きくなる＆コア周囲への新ブロック自動スポーン
-        function growCluster() {
+        // 自動連続四角形スポーン＆定期拡大
+        function spawnAutomaticSquare() {
             checkCount++;
+            spawnCycleCount++;
             playGrowSfx();
 
-            // 1. 中心に近い size=1 ブロックの目標サイズを順次拡大 (1 -> 2)
-            const smallBlocks = blocks.filter(b => !b.clearing && b.size === 1);
-            if (smallBlocks.length > 0) {
-                smallBlocks.sort((a, b) => (a.gx*a.gx + a.gy*a.gy) - (b.gx*b.gx + b.gy*b.gy));
-                const target = smallBlocks[0];
-                target.size = 2;
+            // 3回に1回、中心に近い1x1ブロックを 2x2 に拡大
+            if (spawnCycleCount % 3 === 0) {
+                const smallBlocks = blocks.filter(b => !b.clearing && b.size === 1);
+                if (smallBlocks.length > 0) {
+                    smallBlocks.sort((a, b) => (a.gx*a.gx + a.gy*a.gy) - (b.gx*b.gx + b.gy*b.gy));
+                    const target = smallBlocks[0];
+                    target.size = 2;
 
-                for (let b of blocks) {
-                    if (b.id === target.id || b.clearing) continue;
-                    if (doesOverlap(target.gx, target.gy, target.size, b.gx, b.gy, b.size)) {
-                        const dx = b.gx >= target.gx ? 1 : -1;
-                        const dy = b.gy >= target.gy ? 1 : -1;
-                        b.gx += dx;
-                        b.gy += dy;
-                        b.targetGx = b.gx;
-                        b.targetGy = b.gy;
+                    for (let b of blocks) {
+                        if (b.id === target.id || b.clearing) continue;
+                        if (doesOverlap(target.gx, target.gy, target.size, b.gx, b.gy, b.size)) {
+                            const dx = b.gx >= target.gx ? 1 : -1;
+                            const dy = b.gy >= target.gy ? 1 : -1;
+                            b.gx += dx;
+                            b.gy += dy;
+                            b.targetGx = b.gx;
+                            b.targetGy = b.gy;
+                        }
                     }
                 }
             }
 
-            // 2. コア周辺の「辺」に面した空きマスに新ブロックをスポーン
+            // CORE周辺およびクラスタ外周の空き「辺」に新しい1x1四角形を発生させる
             const spawnCandidates = [
                 {gx: -2, gy: -1}, {gx: -2, gy: 0}, {gx: 1, gy: -1}, {gx: 1, gy: 0},
                 {gx: -1, gy: -2}, {gx: 0, gy: -2}, {gx: -1, gy: 1}, {gx: 0, gy: 1},
-                {gx: -3, gy: -1}, {gx: 2, gy: 0}, {gx: 0, gy: -3}, {gx: 0, gy: 2}
+                {gx: -3, gy: -1}, {gx: 2, gy: 0}, {gx: 0, gy: -3}, {gx: 0, gy: 2},
+                {gx: -2, gy: -2}, {gx: 1, gy: -2}, {gx: -2, gy: 1}, {gx: 1, gy: 1}
             ];
             
+            // クラスタにぴったり密着する有効マスを検索
             for (let cand of spawnCandidates) {
                 const dummy = { size: 1 };
                 if (isValidPosition(dummy, cand.gx, cand.gy)) {
@@ -835,6 +835,7 @@
             }
 
             compactClusterTowardsCore();
+            checkMatches();
 
             for (let b of blocks) {
                 if (Math.abs(b.gx) >= GRID_LIMIT || Math.abs(b.gy) >= GRID_LIMIT) {
@@ -849,13 +850,13 @@
             score = 0;
             totalTurns = 0;
             checkCount = 0;
+            spawnCycleCount = 0;
             autoGrowthTimer = 0;
             activeColorCount = START_COLOR_COUNT;
             isGameOver = false;
             isClearing = false;
             chainCount = 0;
 
-            // 初期配置：COREの「辺」にぴったり接した4つの1x1ブロック
             const initialCoords = [
                 {gx: -2, gy: -1, s: 1, c: 0},
                 {gx: 1, gy: 0, s: 1, c: 1},
@@ -1176,11 +1177,11 @@
         let lastTimestamp = 0;
         function update(dt) {
             if (!isGameOver) {
-                // 自動継続成長タイマー
+                // 自動高頻度スポーンタイマー（1.5秒ごとに新しい四角が自動発生！）
                 autoGrowthTimer += dt;
-                if (autoGrowthTimer >= AUTO_GROWTH_INTERVAL_MS) {
+                if (autoGrowthTimer >= AUTO_SPAWN_INTERVAL_MS) {
                     autoGrowthTimer = 0;
-                    growCluster();
+                    spawnAutomaticSquare();
                 }
                 updateGrowthTimerUI();
             }
