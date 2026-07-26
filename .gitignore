@@ -1,0 +1,10 @@
+# macOS
+.DS_Store
+
+# Temp / scratch (browser profiles, QA outputs, capture staging)
+.tmp-*/
+outputs/
+.capture/
+
+# Node
+node_modules/

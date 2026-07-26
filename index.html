@@ -1,0 +1,1911 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="page-title" content="Fractas">
+    <meta name="description" content="Fractas — a turn-based radial match-3. Make three moves, then the scanner judges the board. No matches means game over.">
+    <title>Fractas</title>
+    <style>
+        :root {
+            --fractas-script-font: 'Brush Script MT', 'Snell Roundhand', 'Apple Chancery', 'Segoe Script', cursive;
+        }
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #000; 
+            color: #fff;
+            font-family: var(--fractas-script-font);
+            overflow: hidden; 
+            touch-action: none; 
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+        #gameCanvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        #uiLayer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none; 
+            padding: 18px 20px;
+            box-sizing: border-box;
+            display: flex;
+            justify-content: flex-start;
+            align-items: flex-start;
+            text-shadow: 0 1px 8px rgba(0,0,0,0.72);
+            z-index: 5;
+            transition: color 0.5s; 
+            font-family: var(--fractas-script-font);
+        }
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+        }
+        .score-box {
+            font-size: clamp(0.95rem, 2.4vw, 1.25rem);
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            color: rgba(255,255,255,0.82);
+        }
+        .chain-box {
+            display: none;
+            font-size: 2.5rem;
+            font-weight: 900;
+            color: #facc15;
+            margin-top: 10px;
+            opacity: 0;
+            transform: scale(0.5) translateX(-20px);
+            transition: opacity 0.2s, transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            text-shadow: 0 0 15px rgba(250, 204, 21, 0.8);
+            font-style: italic;
+        }
+        .chain-box.active {
+            opacity: 1;
+            transform: scale(1) translateX(0);
+        }
+        .theme-box {
+            font-size: 1.5rem;
+            font-weight: bold;
+            text-align: right;
+            transition: transform 0.3s;
+        }
+        .right-panel {
+            display: none;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        .timer-box {
+            font-size: 2rem;
+            font-weight: 900;
+            color: #ffffff;
+            letter-spacing: 0.03em;
+            transition: color 0.2s, transform 0.2s;
+        }
+        .timer-box.warning {
+            color: #facc15;
+            transform: scale(1.04);
+        }
+        .timer-box.danger {
+            color: #fb7185;
+            transform: scale(1.1);
+            text-shadow: 0 0 18px rgba(251,113,133,0.85);
+        }
+        .theme-box.wave-active {
+            transform: scale(1.1);
+        }
+        .wave-type {
+            font-size: 0.7em;
+            margin-left: 10px;
+            opacity: 0.8;
+            font-weight: normal;
+        }
+        /* --- Brand watermark --- */
+        #brand {
+            position: absolute;
+            bottom: 14px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            pointer-events: none;
+            z-index: 5;
+            font-size: 0.85rem;
+            letter-spacing: 0.18em;
+            font-weight: 700;
+            opacity: 0.22;
+            text-transform: uppercase;
+            font-family: var(--fractas-script-font);
+        }
+        /* --- Control hint overlay (auto-dismisses) --- */
+        #hint {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            pointer-events: none;
+            z-index: 8;
+            text-align: center;
+            padding: 24px;
+            box-sizing: border-box;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.0) 30%, rgba(0,0,0,0.55) 100%);
+            transition: opacity 0.6s ease;
+            font-family: var(--fractas-script-font);
+        }
+        #hint.hidden { opacity: 0; }
+        #hint .hint-title {
+            font-size: clamp(1.45rem, 5.8vw, 2.55rem);
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-shadow: 0 0 16px rgba(192,132,252,0.38);
+        }
+        #hint .hint-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            font-size: clamp(0.72rem, 2.7vw, 0.9rem);
+            font-weight: 600;
+            opacity: 0.92;
+        }
+        #hint .hint-chip {
+            border: 1px solid rgba(255,255,255,0.35);
+            border-radius: 999px;
+            padding: 6px 13px;
+            background: rgba(255,255,255,0.06);
+            backdrop-filter: blur(4px);
+        }
+        #hint .hint-sub {
+            font-size: clamp(0.66rem, 2.3vw, 0.82rem);
+            opacity: 0.6;
+            margin-top: 4px;
+            font-weight: 500;
+            letter-spacing: 0.04em;
+        }
+        #gameOver {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            padding: 24px;
+            box-sizing: border-box;
+            text-align: center;
+            background: radial-gradient(ellipse at center, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0.86) 100%);
+            backdrop-filter: blur(2px);
+            font-family: var(--fractas-script-font);
+        }
+        #gameOver.active {
+            display: flex;
+        }
+        #gameOver .game-over-title {
+            font-size: clamp(2rem, 8vw, 4rem);
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #fb7185;
+            text-shadow: 0 0 32px rgba(251,113,133,0.75);
+        }
+        #gameOver .game-over-score {
+            font-size: clamp(1.1rem, 4vw, 1.6rem);
+            font-weight: 800;
+            color: #ffffff;
+        }
+        #gameOver .game-over-sub {
+            font-size: clamp(0.8rem, 3vw, 1rem);
+            color: rgba(255,255,255,0.72);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="uiLayer" style="color: #ffffff;">
+        <div class="left-panel">
+            <div class="score-box">SCORE: <span id="scoreVal">0</span></div>
+            <div class="chain-box" id="chainContainer"><span id="chainVal">0</span> CHAIN!!</div>
+        </div>
+        <div class="right-panel">
+            <div class="timer-box" id="turnContainer">TURNS: <span id="turnVal">0</span>/<span id="turnMaxVal">3</span></div>
+            <div class="theme-box" id="colorContainer">COLORS: <span id="colorCountVal">3</span></div>
+            <div class="theme-box" id="themeContainer">THEME: <span id="themeVal">COSMIC</span></div>
+        </div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="brand">FRACTAS</div>
+
+    <div id="hint">
+        <div class="hint-title">FRACTAS</div>
+        <div class="hint-row">
+            <span class="hint-chip">↻ Drag around — rotate ring</span>
+        </div>
+        <div class="hint-row">
+            <span class="hint-chip">↕ Drag in/out — slide sector</span>
+        </div>
+        <div class="hint-sub">Make 3 moves. If nothing matches, it is game over.</div>
+    </div>
+
+        <div id="gameOver">
+        <div class="game-over-title">GAME OVER</div>
+        <div class="game-over-score">FINAL SCORE: <span id="finalScoreVal">0</span></div>
+        <div class="game-over-sub">No matches found. Tap or click to restart.</div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height, cx, cy;
+
+        // --- ゲーム定数・設定 ---
+        const SECTORS = 12;         
+        const SCALE_FACTOR = 1.25;  
+        let CORE_RADIUS = 50;       
+        
+        const MIN_R = -12; 
+        const MAX_R = 9;   
+        const TOTAL_R = MAX_R - MIN_R + 1;
+        
+        const THEMES = {
+            'COSMIC': { name: 'COSMIC', textColor: '#c084fc', colors: [{h: 220, s: 80, l: 40}, {h: 240, s: 90, l: 60}, {h: 260, s: 85, l: 70}, {h: 280, s: 90, l: 50}, {h: 300, s: 100, l: 60}, {h: 190, s: 70, l: 50}] },
+            'CYBER': { name: 'CYBER', textColor: '#06b6d4', colors: [{h: 320, s: 100, l: 50}, {h: 180, s: 100, l: 50}, {h: 60, s: 100, l: 50}, {h: 120, s: 100, l: 50}, {h: 240, s: 100, l: 60}, {h: 15, s: 100, l: 50}] },
+            'TROPICAL': { name: 'TROPICAL', textColor: '#facc15', colors: [{h: 350, s: 90, l: 60}, {h: 20, s: 100, l: 50}, {h: 50, s: 100, l: 50}, {h: 170, s: 90, l: 40}, {h: 200, s: 90, l: 55}, {h: 290, s: 80, l: 50}] },
+            'VIVID': { name: 'VIVID', textColor: '#f472b6', colors: [{h: 340, s: 80, l: 65}, {h: 200, s: 80, l: 60}, {h: 140, s: 70, l: 50}, {h: 40, s: 90, l: 60}, {h: 280, s: 70, l: 65}, {h: 10, s: 85, l: 65}] },
+            'SUNSET': { name: 'SUNSET', textColor: '#fb923c', colors: [{h: 0, s: 80, l: 50}, {h: 20, s: 90, l: 55}, {h: 40, s: 100, l: 60}, {h: 330, s: 70, l: 45}, {h: 300, s: 60, l: 30}, {h: 270, s: 50, l: 20}] },
+            'NEON': { name: 'NEON', textColor: '#4ade80', colors: [{h: 100, s: 60, l: 50}, {h: 140, s: 70, l: 45}, {h: 80, s: 80, l: 60}, {h: 40, s: 50, l: 50}, {h: 20, s: 60, l: 50}, {h: 180, s: 60, l: 50}] }
+        };
+
+        const THEME_KEYS = Object.keys(THEMES);
+        const WAVE_TYPES = ['DEPTH', 'REVERSE', 'SPIRAL', 'SWEEP', 'NOISE'];
+
+        let board = [];
+        let lockedBoard = []; 
+        let expansionProgress = 0;
+        
+        let currentExpansionSpeed = 0; 
+        let currentRotationSpeed = 0;
+        
+        let score = 0;
+        const TURNS_PER_CHECK = 3;
+        const START_COLOR_COUNT = 3;
+        const MAX_COLOR_COUNT = 6;
+        const AMBIENT_EXPANSION_SPEED = 0.0015;
+        const CLEAR_FADE_DURATION = 920;
+        const REFILL_CHAIN_CHANCE = 0.10;
+        const MAX_JUDGEMENT_CHAINS = 3;
+        const FALL_MOVE_DURATION = 1560;
+        const CHARGE_MOVE_DURATION = 1470;
+        const CHARGE_START_INTERVAL = 85;
+        let turnCount = 0;
+        let totalTurns = 0;
+        let checkCount = 0;
+        let activeColorCount = START_COLOR_COUNT;
+        let isChecking = false;
+        let isGameOver = false;
+        let turnPrompt = null;
+        let judgementChainClears = 0;
+        let reservedMatchCells = new Set();
+        let reservedGlowTimes = new Map();
+        let scanMatchGroups = [];
+        let litCellTimes = new Map();
+        let clearFadeStart = 0;
+        let animationId = null;
+        let rotationAngle = 0;
+
+        // ★ スキャナー管理変数
+        let scannerFloatR = MIN_R - 1;
+        let scannerSpeed = 0.04; 
+        let isScanning = false;
+        let scannerWaitTimer = 0; 
+
+        let currentThemeKey = 'COSMIC';
+        let previousThemeKey = 'COSMIC';
+        let currentWaveType = 'DEPTH';
+        let colorWaveProgress = 1.0; 
+        const WAVE_DURATION = 1500; 
+        let waveStartTime = 0;
+
+        let lastThemeChangeScore = 0;
+        const THEME_CHANGE_SCORE_THRESHOLD = Number.POSITIVE_INFINITY;
+
+        let chainCount = 0; 
+
+        let isDragging = false;
+        let dragMode = 'WAIT';
+        let dragRing = null;
+        let dragSector = null;
+        let startPos = null;
+        let startGrid = null;
+        let prevDragAngle = 0;
+        let dragAngleOffset = 0;
+        let dragStartDistance = 0;
+        let dragStartRFloat = 0;
+        let dragRadiusOffset = 0;
+
+        let isSnapping = false;
+        let snapMode = null; 
+        let snapRing = null;
+        let snapSector = null;
+        let currentSnapOffset = 0;
+
+        let activeAnimations = []; 
+        let isFalling = false; 
+        let isClearing = false; 
+        let blocksToClear = []; 
+        let blocksToClearKeys = new Set();
+        let audioCtx = null;
+        let audioMaster = null;
+        let musicTimer = null;
+        let audioStarted = false;
+        let preferredSpeechVoice = null;
+        let lastDialTickStep = null;
+        let lastDialTickTime = 0;
+        let lastLightSfxTime = 0;
+        window.__fractasAudioState = (window.AudioContext || window.webkitAudioContext) ? 'ready' : 'unsupported';
+        window.__fractasSpeechState = ('speechSynthesis' in window) ? 'ready' : 'unsupported';
+
+        function cellKey(r, s) {
+            return `${r}:${s}`;
+        }
+
+        function getI(r) { return r - MIN_R; }
+        function getR(i) { return i + MIN_R; }
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = width;
+            canvas.height = height;
+            cx = width / 2;
+            cy = height / 2;
+            CORE_RADIUS = Math.min(width, height) * 0.15; 
+            if(CORE_RADIUS < 50) CORE_RADIUS = 50;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function updateUI() {
+            let chainEl = document.getElementById('chainContainer');
+            if (chainCount > 1) { 
+                document.getElementById('chainVal').innerText = chainCount;
+                chainEl.classList.add('active');
+                chainEl.style.transform = 'scale(1.3) translateX(10px) skewX(-10deg)';
+                setTimeout(() => chainEl.style.transform = 'scale(1) translateX(0) skewX(-10deg)', 100);
+            } else {
+                chainEl.classList.remove('active');
+            }
+        }
+
+        function updateTurnUI() {
+            const turnEl = document.getElementById('turnContainer');
+            const turnValEl = document.getElementById('turnVal');
+            const turnMaxEl = document.getElementById('turnMaxVal');
+            const colorCountEl = document.getElementById('colorCountVal');
+            if (!turnEl || !turnValEl || !turnMaxEl || !colorCountEl) return;
+            turnValEl.innerText = turnCount;
+            turnMaxEl.innerText = TURNS_PER_CHECK;
+            colorCountEl.innerText = activeColorCount;
+            turnEl.classList.toggle('warning', turnCount === TURNS_PER_CHECK - 1);
+            turnEl.classList.toggle('danger', isChecking);
+        }
+
+        function startAudio() {
+            if (audioStarted) {
+                if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+                window.__fractasAudioState = audioCtx ? audioCtx.state : 'unavailable';
+                return;
+            }
+            const AudioClass = window.AudioContext || window.webkitAudioContext;
+            if (!AudioClass) {
+                window.__fractasAudioState = 'unsupported';
+                return;
+            }
+            audioStarted = true;
+            audioCtx = new AudioClass();
+            window.__fractasAudioState = audioCtx.state;
+            audioMaster = audioCtx.createGain();
+            audioMaster.gain.value = 0.32;
+            audioMaster.connect(audioCtx.destination);
+
+            const pad = audioCtx.createGain();
+            pad.gain.value = 0.055;
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.value = 780;
+            filter.Q.value = 0.7;
+            pad.connect(filter);
+            filter.connect(audioMaster);
+
+            [82.41, 123.47, 164.81].forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                osc.type = i === 0 ? 'sine' : 'triangle';
+                osc.frequency.value = freq;
+                const gain = audioCtx.createGain();
+                gain.gain.value = i === 0 ? 0.55 : 0.22;
+                osc.connect(gain);
+                gain.connect(pad);
+                osc.start();
+            });
+
+            let step = 0;
+            const scale = [246.94, 277.18, 329.63, 369.99, 415.3, 493.88];
+            musicTimer = setInterval(() => {
+                if (!audioCtx || document.hidden) return;
+                window.__fractasAudioState = audioCtx.state;
+                const freq = scale[step % scale.length] * (step % 5 === 0 ? 0.5 : 1);
+                playTone(freq, 1.15, 'sine', 0.035, 0.04, 1800);
+                step++;
+            }, 860);
+        }
+
+        function playTone(freq, duration = 0.18, type = 'sine', volume = 0.08, attack = 0.01, filterFreq = 2600) {
+            if (!audioCtx || !audioMaster) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            const filter = audioCtx.createBiquadFilter();
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, now);
+            filter.type = 'lowpass';
+            filter.frequency.value = filterFreq;
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(Math.max(0.0002, volume), now + attack);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+            osc.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioMaster);
+            osc.start(now);
+            osc.stop(now + duration + 0.05);
+        }
+
+        function playGlide(startFreq, endFreq, duration, type, volume) {
+            if (!audioCtx || !audioMaster) return;
+            const now = audioCtx.currentTime;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.type = type;
+            osc.frequency.setValueAtTime(startFreq, now);
+            osc.frequency.exponentialRampToValueAtTime(endFreq, now + duration);
+            gain.gain.setValueAtTime(0.0001, now);
+            gain.gain.exponentialRampToValueAtTime(volume, now + 0.015);
+            gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+            osc.connect(gain);
+            gain.connect(audioMaster);
+            osc.start(now);
+            osc.stop(now + duration + 0.04);
+        }
+
+        function playMoveSfx() {
+            startAudio();
+            playGlide(190, 320, 0.16, 'triangle', 0.055);
+        }
+
+        function playDialTickSfx(step = 0) {
+            startAudio();
+            const freq = 720 + (Math.abs(step) % 6) * 34;
+            playTone(freq, 0.032, 'square', 0.012, 0.002, 5200);
+            playTone(freq * 1.5, 0.028, 'triangle', 0.006, 0.002, 5600);
+        }
+
+        function playReserveSfx(count = 1) {
+            startAudio();
+            const base = 440 + Math.min(count, 12) * 8;
+            playTone(base, 0.42, 'sine', 0.035, 0.025, 2600);
+            playTone(base * 1.25, 0.48, 'triangle', 0.026, 0.03, 2400);
+        }
+
+        function playScanSfx() {
+            startAudio();
+            playGlide(146.83, 220, 0.9, 'sine', 0.045);
+            playTone(739.99, 0.34, 'sine', 0.035, 0.02, 2200);
+        }
+
+        function playClearSfx(blockCount, chainMultiplier = 1) {
+            startAudio();
+            const base = 329.63 + Math.min(blockCount, 12) * 12;
+            playTone(base, 0.42, 'triangle', 0.07, 0.015, 3200);
+            playTone(base * 1.5, 0.58, 'sine', 0.04 + Math.min(chainMultiplier, 3) * 0.012, 0.02, 3600);
+        }
+
+        function playVanishSfx(blockCount = 1) {
+            startAudio();
+            const base = 523.25 + Math.min(blockCount, 16) * 10;
+            playTone(base, 0.34, 'sine', 0.045, 0.018, 3200);
+            playTone(base * 1.334, 0.5, 'triangle', 0.035, 0.025, 3000);
+            playGlide(base * 1.8, base * 0.9, 0.55, 'sine', 0.026);
+        }
+
+        function playLightSfx(cell) {
+            startAudio();
+            const now = performance.now();
+            if (now - lastLightSfxTime < 55) return;
+            lastLightSfxTime = now;
+            const freq = 554.37 + ((cell.s + Math.max(0, cell.r - MIN_R)) % 7) * 22;
+            playTone(freq, 0.18, 'sine', 0.018, 0.012, 3400);
+            playTone(freq * 1.5, 0.22, 'triangle', 0.01, 0.014, 3000);
+        }
+
+        function playChargeSfx(count) {
+            startAudio();
+            const notes = [196, 246.94, 293.66, 369.99, 493.88];
+            const limit = Math.min(notes.length, Math.max(2, Math.ceil(count / 8)));
+            notes.slice(0, limit).forEach((freq, i) => {
+                setTimeout(() => playTone(freq, 0.32, 'sine', 0.038, 0.018, 2800), i * 90);
+            });
+        }
+
+        function playGameOverSfx() {
+            startAudio();
+            playGlide(220, 82.41, 0.9, 'sine', 0.065);
+        }
+
+        function pickSpeechVoice() {
+            if (!('speechSynthesis' in window)) return null;
+            const voices = window.speechSynthesis.getVoices();
+            if (!voices || voices.length === 0) return null;
+            const preferredNames = /(samantha|karen|victoria|serena|ava|allison|female|woman|google us english|google uk english female)/i;
+            preferredSpeechVoice =
+                voices.find(v => /^en/i.test(v.lang) && preferredNames.test(v.name)) ||
+                voices.find(v => /^en/i.test(v.lang)) ||
+                voices.find(v => preferredNames.test(v.name)) ||
+                voices[0];
+            return preferredSpeechVoice;
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = () => pickSpeechVoice();
+        }
+
+        function speakTurnPrompt(remaining) {
+            if (!('speechSynthesis' in window)) {
+                window.__fractasSpeechState = 'unsupported';
+                return;
+            }
+            const text = remaining === 1 ? 'One turn left' : (remaining > 1 ? `${remaining} turns left` : 'Judgement');
+            const utterance = new SpeechSynthesisUtterance(text);
+            const voice = preferredSpeechVoice || pickSpeechVoice();
+            if (voice) utterance.voice = voice;
+            utterance.lang = voice ? voice.lang : 'en-US';
+            utterance.pitch = 1.12;
+            utterance.rate = 0.94;
+            utterance.volume = 0.28;
+            window.__fractasSpeechState = voice ? `voice:${voice.name}` : 'default';
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utterance);
+        }
+
+        function endGame() {
+            if (isGameOver) return;
+            playGameOverSfx();
+            isGameOver = true;
+            isDragging = false;
+            dragMode = 'WAIT';
+            isChecking = false;
+            isScanning = false;
+            currentRotationSpeed = 0;
+            currentExpansionSpeed = 0;
+            updateTurnUI();
+            reportScore(true);
+
+            const finalScoreEl = document.getElementById('finalScoreVal');
+            const gameOverEl = document.getElementById('gameOver');
+            if (finalScoreEl) finalScoreEl.innerText = score.toLocaleString();
+            if (gameOverEl) gameOverEl.classList.add('active');
+        }
+
+        function addClearScore(blockCount, chainMultiplier) {
+            const baseScore = (blockCount * 10) + Math.max(0, blockCount - 3) * 20 * chainMultiplier;
+            score += baseScore;
+            playClearSfx(blockCount, chainMultiplier);
+            updateScoreUI();
+        }
+
+        function clearLockedVisuals() {
+            litCellTimes = new Map();
+            for (let i = 0; i < TOTAL_R; i++) {
+                for (let s = 0; s < SECTORS; s++) {
+                    lockedBoard[i][s] = false;
+                }
+            }
+        }
+
+        function markCellLit(cell, time) {
+            const key = cellKey(cell.r, cell.s);
+            if (!litCellTimes.has(key)) {
+                litCellTimes.set(key, time);
+                playLightSfx(cell);
+            }
+            lockedBoard[getI(cell.r)][cell.s] = true;
+        }
+
+        function refreshReservedMatches() {
+            const previousReservedCount = reservedMatchCells.size;
+            const previousReserved = reservedMatchCells;
+            reservedMatchCells = new Set();
+            if (isClearing || isFalling) return;
+            const matchGroups = findMatchesGroups();
+            const now = performance.now();
+            for (let group of matchGroups) {
+                for (let cell of group) {
+                    const key = cellKey(cell.r, cell.s);
+                    reservedMatchCells.add(key);
+                    if (!previousReserved.has(key)) reservedGlowTimes.set(key, now);
+                }
+            }
+            reservedGlowTimes.forEach((time, key) => {
+                if (!reservedMatchCells.has(key)) reservedGlowTimes.delete(key);
+            });
+            if (!isChecking && reservedMatchCells.size > previousReservedCount) {
+                playReserveSfx(reservedMatchCells.size);
+            }
+        }
+
+        function setBlocksToClear(cells) {
+            blocksToClear = cells;
+            blocksToClearKeys = new Set(cells.map(cell => cellKey(cell.r, cell.s)));
+            clearFadeStart = performance.now();
+        }
+
+        function clearBlocksToClear() {
+            blocksToClear = [];
+            blocksToClearKeys = new Set();
+            clearFadeStart = 0;
+        }
+
+        function advanceChargeColor() {
+            activeColorCount = Math.min(MAX_COLOR_COUNT, activeColorCount + 1);
+            updateTurnUI();
+        }
+
+        function startTurnCheck() {
+            if (isChecking || isGameOver) return;
+            isChecking = true;
+            checkCount++;
+            judgementChainClears = 0;
+            scannerFloatR = MIN_R - 1;
+            scannerWaitTimer = 0;
+            scanMatchGroups = findMatchesGroups().map((cells, index) => ({ cells, index, scanned: false }));
+            reservedMatchCells = new Set();
+            reservedGlowTimes = new Map();
+            clearLockedVisuals();
+            isScanning = true;
+            playScanSfx();
+            updateTurnUI();
+        }
+
+        function finishTurnCheck() {
+            isChecking = false;
+            isScanning = false;
+            scannerFloatR = MIN_R - 1;
+            scanMatchGroups = [];
+            judgementChainClears = 0;
+            clearLockedVisuals();
+            turnCount = 0;
+            chainCount = 0;
+            updateUI();
+            updateTurnUI();
+            refreshReservedMatches();
+        }
+
+        function triggerTurnPrompt() {
+            const remaining = Math.max(0, TURNS_PER_CHECK - turnCount);
+            turnPrompt = {
+                startTime: performance.now(),
+                duration: remaining > 0 ? 1050 : 1250,
+                primary: remaining > 0 ? String(remaining) : 'SCAN',
+                secondary: remaining === 1 ? 'TURN LEFT' : (remaining > 1 ? 'TURNS LEFT' : 'JUDGEMENT')
+            };
+            speakTurnPrompt(remaining);
+        }
+
+        function completePlayerTurn() {
+            if (isChecking || isGameOver) return;
+            totalTurns++;
+            turnCount++;
+            updateTurnUI();
+            triggerTurnPrompt();
+            if (turnCount >= TURNS_PER_CHECK) startTurnCheck();
+            else refreshReservedMatches();
+        }
+
+        function triggerThemeChange() {
+            previousThemeKey = currentThemeKey;
+            let availableKeys = THEME_KEYS.filter(k => k !== currentThemeKey);
+            currentThemeKey = availableKeys[Math.floor(Math.random() * availableKeys.length)];
+            currentWaveType = WAVE_TYPES[Math.floor(Math.random() * WAVE_TYPES.length)];
+            
+            colorWaveProgress = 0.0;
+            waveStartTime = performance.now();
+            
+            let uiLayer = document.getElementById('uiLayer');
+            let themeEl = document.getElementById('themeContainer');
+            
+            document.getElementById('themeVal').innerHTML = 
+                THEMES[currentThemeKey].name + `<span class="wave-type">[${currentWaveType}]</span>`;
+            uiLayer.style.color = THEMES[currentThemeKey].textColor;
+            
+            themeEl.classList.add('wave-active');
+            setTimeout(() => {
+                themeEl.classList.remove('wave-active');
+            }, WAVE_DURATION);
+        }
+
+        function lerpColor(c1, c2, t) {
+            let h1 = c1.h;
+            let h2 = c2.h;
+            let d = h2 - h1;
+            if (d > 180) h1 += 360;
+            else if (d < -180) h2 += 360;
+            let h = h1 + (h2 - h1) * t;
+            let s = c1.s + (c2.s - c1.s) * t;
+            let l = c1.l + (c2.l - c1.l) * t;
+            return {h: h % 360, s: s, l: l};
+        }
+
+        function pseudoRandom(r, s) {
+            let x = Math.sin(r * 12.9898 + s * 78.233) * 43758.5453;
+            return x - Math.floor(x);
+        }
+
+        function getColorString(r, s, colorIdx, lightnessMultiplier = 1.0) {
+            if (colorIdx === -1) return 'transparent';
+            let currentThemeColors = THEMES[currentThemeKey].colors;
+            let prevThemeColors = THEMES[previousThemeKey].colors;
+
+            let targetColor = currentThemeColors[colorIdx];
+            let baseColor = prevThemeColors[colorIdx];
+            let blendedColor = targetColor;
+
+            if (colorWaveProgress < 1.0) {
+                let threshold = 0;
+                let r_norm = (r - MIN_R) / (MAX_R - MIN_R);
+                
+                if (currentWaveType === 'DEPTH') threshold = r_norm; 
+                else if (currentWaveType === 'REVERSE') threshold = 1.0 - r_norm; 
+                else if (currentWaveType === 'SPIRAL') {
+                    let spiral = (s / SECTORS) - (r / 6.0); 
+                    spiral = spiral - Math.floor(spiral); 
+                    threshold = r_norm * 0.7 + spiral * 0.3;
+                } else if (currentWaveType === 'SWEEP') threshold = s / SECTORS; 
+                else if (currentWaveType === 'NOISE') threshold = pseudoRandom(r, s); 
+
+                let waveWidth = 0.4;
+                let mappedWave = colorWaveProgress * (1.0 + waveWidth);
+                let localProgress = (mappedWave - threshold) / waveWidth;
+                localProgress = Math.max(0, Math.min(1, localProgress));
+                let easedProgress = localProgress * localProgress * (3 - 2 * localProgress);
+
+                blendedColor = lerpColor(baseColor, targetColor, easedProgress);
+            }
+
+            let newH = blendedColor.h;
+            let newS = blendedColor.s;
+            let newL = Math.max(0, Math.min(100, blendedColor.l * lightnessMultiplier));
+            return `hsl(${newH}, ${newS}%, ${newL}%)`;
+        }
+
+        function getColorAt(r, s) {
+            if (r < MIN_R || r > MAX_R) return -1;
+            let sMod = (s % SECTORS + SECTORS) % SECTORS;
+            return board[getI(r)][sMod];
+        }
+
+        function createsMatch(targetR, targetS, color) {
+            let countR = 1;
+            let r = targetR - 1;
+            while(r >= MIN_R && getColorAt(r, targetS) === color) { countR++; r--; }
+            r = targetR + 1;
+            while(r <= MAX_R && getColorAt(r, targetS) === color) { countR++; r++; }
+            if (countR >= 3) return true;
+
+            let countS = 1;
+            let sDiff = 1;
+            while(countS < SECTORS && getColorAt(targetR, targetS - sDiff) === color) { countS++; sDiff++; }
+            sDiff = 1;
+            while(countS < SECTORS && getColorAt(targetR, targetS + sDiff) === color) { countS++; sDiff++; }
+            if (countS >= 3) return true;
+
+            return false;
+        }
+
+        function createsMatchInSim(simBoard, targetR, targetS, color) {
+            let countR = 1;
+            let r = targetR - 1;
+            while (r >= MIN_R && simBoard[getI(r)][targetS] === color) { countR++; r--; }
+            r = targetR + 1;
+            while (r <= MAX_R && simBoard[getI(r)][targetS] === color) { countR++; r++; }
+            if (countR >= 3) return true;
+
+            let countS = 1;
+            let sDiff = 1;
+            while (countS < SECTORS && simBoard[getI(targetR)][(targetS - sDiff + SECTORS) % SECTORS] === color) { countS++; sDiff++; }
+            sDiff = 1;
+            while (countS < SECTORS && simBoard[getI(targetR)][(targetS + sDiff) % SECTORS] === color) { countS++; sDiff++; }
+            return countS >= 3;
+        }
+
+        function getSafeColorIdx(r, s) {
+            let available = Array.from(Array(activeColorCount).keys()).sort(() => Math.random() - 0.5);
+            for (let c of available) {
+                if (!createsMatch(r, s, c)) return c;
+            }
+            return available[0]; 
+        }
+
+        function getChainFriendlyColor(simBoard, r, s) {
+            let available = Array.from(Array(activeColorCount).keys()).sort(() => Math.random() - 0.5);
+            let chainCandidates = available.filter(c => createsMatchInSim(simBoard, r, s, c));
+            if (chainCandidates.length > 0 && Math.random() < REFILL_CHAIN_CHANCE) {
+                return chainCandidates[0];
+            }
+            for (let c of available) {
+                if (!createsMatchInSim(simBoard, r, s, c)) return c;
+            }
+            return available[0];
+        }
+
+        function resetGame() {
+            board = [];
+            lockedBoard = [];
+            for (let i = 0; i < TOTAL_R; i++) {
+                board.push(new Array(SECTORS).fill(-1));
+                lockedBoard.push(new Array(SECTORS).fill(false));
+            }
+
+            expansionProgress = 0;
+            currentExpansionSpeed = 0; 
+            score = 0;
+            turnCount = 0;
+            totalTurns = 0;
+            checkCount = 0;
+            activeColorCount = START_COLOR_COUNT;
+            isChecking = false;
+            isGameOver = false;
+            turnPrompt = null;
+            judgementChainClears = 0;
+            reservedMatchCells = new Set();
+            reservedGlowTimes = new Map();
+            scanMatchGroups = [];
+            litCellTimes = new Map();
+            rotationAngle = 0; 
+            currentRotationSpeed = 0; 
+            
+            scannerFloatR = MIN_R - 1;
+            isScanning = false;
+            scannerWaitTimer = 0;
+
+            currentThemeKey = 'COSMIC';
+            previousThemeKey = 'COSMIC';
+            currentWaveType = 'DEPTH';
+            colorWaveProgress = 1.0;
+            chainCount = 0;
+            lastThemeChangeScore = 0; 
+            updateUI();
+            updateTurnUI();
+            
+            let uiLayer = document.getElementById('uiLayer');
+            document.getElementById('themeVal').innerHTML = THEMES[currentThemeKey].name;
+            uiLayer.style.color = THEMES[currentThemeKey].textColor;
+            updateScoreUI();
+
+            const gameOverEl = document.getElementById('gameOver');
+            if (gameOverEl) gameOverEl.classList.remove('active');
+            _lastSentScore = -1;
+            _lastSendTime = -100000;
+            
+            activeAnimations = [];
+            isFalling = false;
+            isClearing = false;
+            clearBlocksToClear();
+
+            isDragging = false;
+            dragMode = 'WAIT';
+            dragRing = null;
+            dragSector = null;
+            dragAngleOffset = 0;
+            dragRadiusOffset = 0;
+            
+            isSnapping = false;
+            snapMode = null;
+            snapRing = null;
+            snapSector = null;
+            currentSnapOffset = 0;
+            
+            for (let r = MIN_R; r <= MAX_R; r++) { 
+                for(let s = 0; s < SECTORS; s++){
+                    board[getI(r)][s] = getSafeColorIdx(r, s);
+                }
+            }
+            refreshReservedMatches();
+
+            if (animationId) cancelAnimationFrame(animationId);
+            lastTime = performance.now();
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function isBusy() {
+            return isFalling || isClearing || isSnapping || isChecking; 
+        }
+
+        function boardShiftOutward() {
+            for (let r = MAX_R; r > MIN_R; r--) {
+                for (let s = 0; s < SECTORS; s++) {
+                    board[getI(r)][s] = board[getI(r - 1)][s];
+                    lockedBoard[getI(r)][s] = lockedBoard[getI(r - 1)][s];
+                }
+            }
+            for (let s = 0; s < SECTORS; s++) {
+                board[getI(MIN_R)][s] = getSafeColorIdx(MIN_R, s);
+                lockedBoard[getI(MIN_R)][s] = false;
+            }
+            
+            scannerFloatR -= 1.0;
+
+            blocksToClear.forEach(cell => cell.r += 1);
+            blocksToClearKeys = new Set(blocksToClear.map(cell => cellKey(cell.r, cell.s)));
+            if (reservedMatchCells.size > 0 || reservedGlowTimes.size > 0 || litCellTimes.size > 0) {
+                const shiftedReserved = new Set();
+                reservedMatchCells.forEach(key => {
+                    const [r, s] = key.split(':').map(Number);
+                    if (r + 1 <= MAX_R) shiftedReserved.add(cellKey(r + 1, s));
+                });
+                reservedMatchCells = shiftedReserved;
+
+                const shiftedReserveGlow = new Map();
+                reservedGlowTimes.forEach((time, key) => {
+                    const [r, s] = key.split(':').map(Number);
+                    if (r + 1 <= MAX_R) shiftedReserveGlow.set(cellKey(r + 1, s), time);
+                });
+                reservedGlowTimes = shiftedReserveGlow;
+
+                const shiftedLit = new Map();
+                litCellTimes.forEach((time, key) => {
+                    const [r, s] = key.split(':').map(Number);
+                    if (r + 1 <= MAX_R) shiftedLit.set(cellKey(r + 1, s), time);
+                });
+                litCellTimes = shiftedLit;
+            }
+            activeAnimations.forEach(anim => {
+                if (anim.type === 'gravity') {
+                    if (anim.from) anim.from.r += 1;
+                    if (anim.to) anim.to.r += 1;
+                }
+            });
+
+            if (!isFalling && !isClearing) {
+                applyGravityAnimated();
+            }
+            return true;
+        }
+
+        function applyGravityAnimated() {
+            // ★ バグ修正: 未定義だった isSwapping を削除
+            if (isSnapping || isDragging || isFalling || isClearing) return false;
+            let animations = [];
+            const now = performance.now();
+            
+            let simBoard = [];
+            for (let i = 0; i < TOTAL_R; i++) simBoard.push(new Array(SECTORS).fill(-1));
+            let chargeIndex = 0;
+            
+            for (let s = 0; s < SECTORS; s++) {
+                let writeR = MAX_R; 
+                for (let readR = MAX_R; readR >= MIN_R; readR--) {
+                    if (board[getI(readR)][s] !== -1) {
+                        let color = board[getI(readR)][s];
+                        simBoard[getI(writeR)][s] = color; 
+                        
+                        if (readR !== writeR) {
+                            board[getI(readR)][s] = -1; 
+                            lockedBoard[getI(readR)][s] = false; 
+                            animations.push({
+                                type: 'gravity',
+                                startTime: now,
+                                delay: Math.max(0, (MAX_R - writeR) * 12 + s * 5),
+                                duration: FALL_MOVE_DURATION + Math.abs(writeR - readR) * 32, 
+                                from: {r: readR, s: s},
+                                to: {r: writeR, s: s},
+                                color: color
+                            });
+                        }
+                        writeR--;
+                    }
+                }
+                
+                while (writeR >= MIN_R) {
+                    let newColor = getChainFriendlyColor(simBoard, writeR, s);
+                    simBoard[getI(writeR)][s] = newColor;
+                    
+                    animations.push({
+                        type: 'charge',
+                        startTime: now,
+                        delay: chargeIndex * CHARGE_START_INTERVAL,
+                        duration: CHARGE_MOVE_DURATION + (writeR - MIN_R) * 24, 
+                        from: {r: writeR, s: s}, 
+                        to: {r: writeR, s: s},
+                        color: newColor
+                    });
+                    
+                    chargeIndex++;
+                    writeR--;
+                }
+            }
+            
+            if (animations.length > 0) {
+                isFalling = true; 
+                playChargeSfx(animations.length);
+                let completedCount = 0;
+                for (let anim of animations) {
+                    anim.onComplete = () => {
+                        if (anim.to.r <= MAX_R) {
+                            board[getI(anim.to.r)][anim.to.s] = anim.color;
+                        }
+                        completedCount++;
+                        if (completedCount === animations.length) {
+                            isFalling = false;
+                            if (isChecking) resolveAllMatches();
+                            else {
+                                refreshReservedMatches();
+                                resolveAllMatches();
+                            }
+                        }
+                    };
+                    anim.started = false;
+                    activeAnimations.push(anim);
+                }
+                return true;
+            }
+            
+            return false;
+        }
+
+        function findMatchesGroups() {
+            let groups = [];
+            let visited = [];
+            for (let r = 0; r < TOTAL_R; r++) {
+                visited.push(new Array(SECTORS).fill(false));
+            }
+
+            for (let r = MIN_R; r <= MAX_R; r++) {
+                for (let s = 0; s < SECTORS; s++) {
+                    let color = board[getI(r)][s];
+                    if (color !== -1 && !visited[getI(r)][s]) {
+                        let group = [];
+                        let stack = [{r: r, s: s}];
+                        
+                        while (stack.length > 0) {
+                            let curr = stack.pop();
+                            let cr = curr.r;
+                            let cs = curr.s;
+
+                            if (visited[getI(cr)][cs]) continue;
+                            visited[getI(cr)][cs] = true;
+                            group.push({r: cr, s: cs});
+
+                            let neighbors = [];
+                            if (cr + 1 <= MAX_R) neighbors.push({r: cr + 1, s: cs}); 
+                            if (cr - 1 >= MIN_R) neighbors.push({r: cr - 1, s: cs});         
+                            neighbors.push({r: cr, s: (cs + 1) % SECTORS});              
+                            neighbors.push({r: cr, s: (cs - 1 + SECTORS) % SECTORS});    
+
+                            for (let n of neighbors) {
+                                if (board[getI(n.r)][n.s] === color && !visited[getI(n.r)][n.s]) {
+                                    stack.push(n);
+                                }
+                            }
+                        }
+
+                        if (group.length >= 3) {
+                            groups.push(group);
+                        }
+                    }
+                }
+            }
+            return groups;
+        }
+
+        function resolveAllMatches() {
+            if (isFalling || isSnapping || isDragging || isClearing) return; 
+
+            let matchGroups = findMatchesGroups();
+            
+            if (matchGroups.length > 0) {
+                if (isChecking && judgementChainClears >= MAX_JUDGEMENT_CHAINS) {
+                    refreshReservedMatches();
+                    finishTurnCheck();
+                    return;
+                }
+                if (isChecking) judgementChainClears++;
+                chainCount++;
+                updateUI(); 
+                
+                isClearing = true; 
+                let toClear = [];
+                matchGroups.forEach(group => {
+                    group.forEach(cell => {
+                        toClear.push(cell);
+                        markCellLit(cell, performance.now());
+                    });
+                });
+                setBlocksToClear(toClear); 
+
+                let removedCount = blocksToClear.length;
+                let boost = Math.log1p(removedCount) * Math.log1p(chainCount);
+                currentRotationSpeed += boost * 0.00001;
+
+                addClearScore(blocksToClear.length, chainCount);
+
+                let waitDuration = Math.max(100, 350 - (chainCount * 40));
+
+                activeAnimations.push({
+                    type: 'highlight_wait',
+                    startTime: performance.now(),
+                    duration: Math.max(waitDuration, CLEAR_FADE_DURATION), 
+                    onComplete: () => {
+                        playVanishSfx(blocksToClear.length);
+                        blocksToClear.forEach(cell => {
+                            if (cell.r <= MAX_R) { 
+                                board[getI(cell.r)][cell.s] = -1; 
+                                lockedBoard[getI(cell.r)][cell.s] = false;
+                            }
+                        });
+                        clearBlocksToClear();
+                        clearLockedVisuals();
+                        isClearing = false; 
+                        
+                        if (!applyGravityAnimated()) {
+                            if (isChecking) finishTurnCheck();
+                            else resolveAllMatches();
+                        }
+                    }
+                });
+            } else {
+                if (chainCount > 0) {
+                    if (score - lastThemeChangeScore >= THEME_CHANGE_SCORE_THRESHOLD) {
+                        triggerThemeChange();
+                        lastThemeChangeScore = score;
+                    }
+                }
+                chainCount = 0;
+                updateUI(); 
+
+                if (isChecking) finishTurnCheck();
+            }
+        }
+
+        function getGridFromPos(x, y) {
+            let dx = x - cx;
+            let dy = y - cy;
+            let distance = Math.sqrt(dx * dx + dy * dy);
+            let rawAngle = Math.atan2(dy, dx);
+            let angle = rawAngle - rotationAngle;
+
+            if (distance < 3) return null;
+
+            let logVal = Math.log(distance / CORE_RADIUS) / Math.log(SCALE_FACTOR);
+            let r = Math.floor(logVal - expansionProgress);
+
+            if (r < MIN_R || r > MAX_R) return null;
+
+            angle = (angle % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+            let s = Math.floor(angle / (Math.PI * 2 / SECTORS));
+
+            return { r: r, s: s };
+        }
+
+        function onPointerDown(e) {
+            startAudio();
+            if (isGameOver) return;
+            if (isBusy() || isSnapping) return;
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            let grid = getGridFromPos(clientX, clientY);
+            if (!grid) return;
+
+            isDragging = true;
+            dragMode = 'WAIT'; 
+            dragRing = grid.r;
+            dragSector = grid.s;
+            
+            let dx = clientX - cx;
+            let dy = clientY - cy;
+            dragStartDistance = Math.sqrt(dx*dx + dy*dy);
+            dragStartAngle = Math.atan2(dy, dx);
+            prevDragAngle = dragStartAngle;
+            
+            dragAngleOffset = 0;
+            lastDialTickStep = null;
+            lastDialTickTime = 0;
+            dragRadiusOffset = 0;
+            dragStartRFloat = Math.log(dragStartDistance / CORE_RADIUS) / Math.log(SCALE_FACTOR) - expansionProgress;
+        }
+
+        function onPointerMove(e) {
+            if (e.cancelable) e.preventDefault();
+            if (isGameOver) return;
+            if (!isDragging) return;
+
+            let clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            let clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            
+            let dx = clientX - cx;
+            let dy = clientY - cy;
+            let distance = Math.sqrt(dx*dx + dy*dy);
+            let angle = Math.atan2(dy, dx);
+
+            if (dragMode === 'WAIT') {
+                let distDiff = Math.abs(distance - dragStartDistance);
+                let angleDiff = Math.abs(angle - dragStartAngle);
+                if (angleDiff > Math.PI) angleDiff = Math.PI * 2 - angleDiff;
+                let arcLength = dragStartDistance * angleDiff;
+
+                if (distDiff > 8 || arcLength > 8) {
+                    if (distDiff > arcLength) dragMode = 'SHIFT'; 
+                    else dragMode = 'ROTATE';                     
+                }
+            }
+
+            if (dragMode === 'ROTATE') {
+                let hasLocked = false;
+                for (let s = 0; s < SECTORS; s++) {
+                    if (lockedBoard[getI(dragRing)][s]) { hasLocked = true; break; }
+                }
+                
+                if (hasLocked) {
+                    dragAngleOffset = 0; 
+                    prevDragAngle = angle;
+                } else {
+                    let diff = angle - prevDragAngle;
+                    if (diff > Math.PI) diff -= Math.PI * 2;
+                    if (diff < -Math.PI) diff += Math.PI * 2;
+                    dragAngleOffset += diff;
+                    prevDragAngle = angle;
+
+                    const tickUnit = (Math.PI * 2 / SECTORS) / 8;
+                    const tickStep = Math.trunc(dragAngleOffset / tickUnit);
+                    const tickNow = performance.now();
+                    if (lastDialTickStep === null) {
+                        lastDialTickStep = tickStep;
+                    } else if (tickStep !== lastDialTickStep && tickNow - lastDialTickTime > 20) {
+                        playDialTickSfx(tickStep);
+                        lastDialTickStep = tickStep;
+                        lastDialTickTime = tickNow;
+                    }
+                }
+            } else if (dragMode === 'SHIFT') {
+                let hasLocked = false;
+                for (let r = MIN_R; r <= MAX_R; r++) {
+                    if (lockedBoard[getI(r)][dragSector]) { hasLocked = true; break; }
+                }
+                
+                if (hasLocked) {
+                    dragRadiusOffset = 0;
+                } else {
+                    let currentRawRFloat = Math.log(distance / CORE_RADIUS) / Math.log(SCALE_FACTOR) - expansionProgress;
+                    // ★ 修正：縦スライドの感度を1.5倍に引き上げ、より動かしやすく
+                    dragRadiusOffset = (currentRawRFloat - dragStartRFloat) * 1.5;
+
+                    const tickStep = Math.trunc(dragRadiusOffset * 8);
+                    const tickNow = performance.now();
+                    if (lastDialTickStep === null) {
+                        lastDialTickStep = tickStep;
+                    } else if (tickStep !== lastDialTickStep && tickNow - lastDialTickTime > 20) {
+                        playDialTickSfx(tickStep);
+                        lastDialTickStep = tickStep;
+                        lastDialTickTime = tickNow;
+                    }
+                }
+            }
+        }
+
+        function onPointerUp(e) {
+            if (isGameOver) {
+                isDragging = false;
+                return;
+            }
+            if (!isDragging) return;
+            isDragging = false;
+
+            if (dragMode === 'WAIT') return;
+
+            isSnapping = true;
+            snapMode = dragMode;
+
+            if (dragMode === 'ROTATE') {
+                let angleStep = Math.PI * 2 / SECTORS;
+                let sectorsMoved = Math.round(dragAngleOffset / angleStep);
+                let targetOffset = sectorsMoved * angleStep;
+
+                snapRing = dragRing;
+
+                activeAnimations.push({
+                    type: 'snap_ring',
+                    startTime: performance.now(),
+                    duration: 150, 
+                    startOffset: dragAngleOffset,
+                    targetOffset: targetOffset,
+                    onComplete: () => {
+                        let r = snapRing;
+                        let sm = sectorsMoved % SECTORS;
+                        
+                        if (sm !== 0) {
+                            let originalColors = [...board[getI(r)]];
+                            let newColors = new Array(SECTORS).fill(-1);
+                            for (let s = 0; s < SECTORS; s++) {
+                                let newS = (s + sm) % SECTORS;
+                                if (newS < 0) newS += SECTORS;
+                                newColors[newS] = originalColors[s];
+                            }
+                            board[getI(r)] = newColors;
+                        }
+                        
+                        isSnapping = false;
+                        snapRing = null;
+                        currentSnapOffset = 0;
+                        if (sm !== 0) {
+                            playMoveSfx();
+                            completePlayerTurn();
+                        }
+                    }
+                });
+            } else if (dragMode === 'SHIFT') {
+                let ringsMoved = Math.round(dragRadiusOffset);
+                let targetOffset = ringsMoved;
+
+                snapSector = dragSector;
+
+                activeAnimations.push({
+                    type: 'snap_sector',
+                    startTime: performance.now(),
+                    duration: 150,
+                    startOffset: dragRadiusOffset,
+                    targetOffset: targetOffset,
+                    onComplete: () => {
+                        let s = snapSector;
+                        let rm = ringsMoved % TOTAL_R;
+                        
+                        if (rm !== 0) {
+                            let originalColumn = [];
+                            for (let r = MIN_R; r <= MAX_R; r++) {
+                                originalColumn.push(board[getI(r)][s]);
+                            }
+                            let newColumn = new Array(TOTAL_R).fill(-1);
+                            for (let i = 0; i < TOTAL_R; i++) {
+                                let newI = (i + rm) % TOTAL_R;
+                                if (newI < 0) newI += TOTAL_R;
+                                newColumn[newI] = originalColumn[i];
+                            }
+                            for (let r = MIN_R; r <= MAX_R; r++) {
+                                board[getI(r)][s] = newColumn[getI(r)];
+                            }
+                        }
+                        
+                        isSnapping = false;
+                        snapSector = null;
+                        currentSnapOffset = 0;
+                        if (rm !== 0) {
+                            playMoveSfx();
+                            completePlayerTurn();
+                        }
+                    }
+                });
+            }
+        }
+
+        canvas.addEventListener('mousedown', onPointerDown);
+        canvas.addEventListener('mousemove', onPointerMove);
+        window.addEventListener('mouseup', onPointerUp);
+        canvas.addEventListener('touchstart', onPointerDown, {passive: false});
+        canvas.addEventListener('touchmove', onPointerMove, {passive: false});
+        window.addEventListener('touchend', onPointerUp, {passive: false});
+
+        let lastTime = 0;
+
+        function update(dt) {
+            let now = performance.now();
+            if (isGameOver) return;
+            
+            for (let i = activeAnimations.length - 1; i >= 0; i--) {
+                let anim = activeAnimations[i];
+                let elapsed = now - anim.startTime - (anim.delay || 0);
+                anim.started = elapsed >= 0;
+                anim.progress = Math.max(0, Math.min(elapsed / anim.duration, 1.0));
+                
+                if (anim.type === 'gravity' || anim.type === 'charge') {
+                    let p = anim.progress;
+                    anim.easedProgress = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+                } else if (anim.type === 'snap_ring' || anim.type === 'snap_sector') {
+                    anim.easedProgress = anim.progress * (2 - anim.progress); 
+                    currentSnapOffset = anim.startOffset + (anim.targetOffset - anim.startOffset) * anim.easedProgress;
+                } else {
+                    anim.easedProgress = anim.progress;
+                }
+
+                if (anim.progress >= 1.0) {
+                    anim.onComplete();
+                    activeAnimations.splice(i, 1);
+                }
+            }
+
+            let decay = Math.pow(0.99, dt / 16); 
+            
+            currentRotationSpeed *= decay;
+            if (currentRotationSpeed < 0.00001) currentRotationSpeed = 0;
+            rotationAngle += currentRotationSpeed * dt;
+
+            if (colorWaveProgress < 1.0) {
+                colorWaveProgress = (now - waveStartTime) / WAVE_DURATION;
+                if (colorWaveProgress > 1.0) colorWaveProgress = 1.0;
+            }
+
+            currentExpansionSpeed *= decay;
+            if (currentExpansionSpeed < 0.0001) currentExpansionSpeed = 0;
+            expansionProgress += currentExpansionSpeed * (dt / 16);
+            if (!isDragging && !isSnapping && !isClearing && !isFalling) {
+                expansionProgress += AMBIENT_EXPANSION_SPEED * (dt / 16);
+            }
+            
+            if (!isClearing && !isFalling) {
+                if (isChecking && isScanning) {
+                    scannerFloatR += scannerSpeed * (dt / 16);
+                    
+                    const litTime = performance.now();
+                    for (let group of scanMatchGroups) {
+                        for (let cell of group.cells) {
+                            if (!lockedBoard[getI(cell.r)][cell.s] && cell.r <= scannerFloatR) {
+                                markCellLit(cell, litTime);
+                            }
+                        }
+                    }
+
+                    if (scannerFloatR > MAX_R + 0.5) {
+                        isScanning = false;
+                        
+                        let toClear = [];
+                        for (let r = MIN_R; r <= MAX_R; r++) {
+                            for (let s = 0; s < SECTORS; s++) {
+                                if (lockedBoard[getI(r)][s]) {
+                                    toClear.push({r: r, s: s});
+                                }
+                            }
+                        }
+
+                        if (toClear.length > 0) {
+                            let removedCount = toClear.length;
+                            let boost = Math.log1p(removedCount) * Math.log1p(1);
+                            currentRotationSpeed += boost * 0.00001;
+
+                            isClearing = true;
+                            setBlocksToClear(toClear);
+                            judgementChainClears = 1;
+                            chainCount = 1;
+                            updateUI();
+                            
+                            activeAnimations.push({
+                                type: 'highlight_wait',
+                                startTime: performance.now(),
+                                duration: CLEAR_FADE_DURATION, 
+                                onComplete: () => {
+                                    playVanishSfx(blocksToClear.length);
+                                    blocksToClear.forEach(cell => {
+                                        if (cell.r <= MAX_R) { 
+                                            board[getI(cell.r)][cell.s] = -1;
+                                            lockedBoard[getI(cell.r)][cell.s] = false;
+                                        }
+                                    });
+                                    addClearScore(blocksToClear.length, 1);
+                                    
+                                    clearBlocksToClear();
+                                    clearLockedVisuals();
+                                    isClearing = false;
+                                    advanceChargeColor();
+                                    if (!applyGravityAnimated()) {
+                                        if (isChecking) resolveAllMatches();
+                                        else resolveAllMatches();
+                                    }
+                                }
+                            });
+                        } else {
+                            endGame();
+                        }
+                    }
+                }
+            }
+
+            while (expansionProgress >= 1.0) {
+                if (isDragging || isSnapping) {
+                    expansionProgress = 1.0;
+                    break;
+                } else {
+                    boardShiftOutward();
+                    expansionProgress -= 1.0;
+                }
+            }
+        }
+
+        function buildBlockPath(r, s, additionalAngleOffset = 0, additionalRadiusOffset = 0) {
+            let floatR = r + expansionProgress + additionalRadiusOffset;
+            
+            while (floatR >= MAX_R + 1) floatR -= TOTAL_R;
+            while (floatR < MIN_R) floatR += TOTAL_R;
+
+            let innerRadius = CORE_RADIUS * Math.pow(SCALE_FACTOR, floatR);
+            let outerRadius = CORE_RADIUS * Math.pow(SCALE_FACTOR, floatR + 1);
+            
+            if (outerRadius < 1 || innerRadius > Math.max(width, height)) return null; 
+
+            let angleStep = (Math.PI * 2) / SECTORS;
+            let startAngle = s * angleStep + rotationAngle + additionalAngleOffset;
+            let endAngle = (s + 1) * angleStep + rotationAngle + additionalAngleOffset;
+
+            let path = new Path2D();
+            path.arc(cx, cy, Math.max(0.1, outerRadius), startAngle, endAngle, false);
+            path.arc(cx, cy, Math.max(0, innerRadius), endAngle, startAngle, true);
+            path.closePath();
+            
+            return { path, innerRadius, outerRadius, floatR };
+        }
+
+        function getAnimatedBlockPathInfo(animObj) {
+            if (animObj.started === false) return null;
+            let colorIdx = animObj.color;
+            if (colorIdx === -1) return null; 
+
+            let p = animObj.easedProgress || 0;
+            let interpR = animObj.from.r + (animObj.to.r - animObj.from.r) * p;
+            let sDiff = animObj.to.s - animObj.from.s;
+            if (sDiff > SECTORS / 2) sDiff -= SECTORS;
+            if (sDiff < -SECTORS / 2) sDiff += SECTORS;
+            let interpS = animObj.from.s + sDiff * p;
+            interpS = (interpS % SECTORS + SECTORS) % SECTORS;
+
+            let pathInfo = buildBlockPath(interpR, interpS, 0, 0);
+            if (!pathInfo) return null;
+
+            return {
+                r: interpR, s: interpS,
+                colorIdx: colorIdx,
+                isHighlighting: false,
+                isLocked: false,
+                isReserved: false,
+                litAt: 0,
+                animType: animObj.type,
+                animProgress: animObj.progress || 0,
+                pathInfo: pathInfo,
+                isAnim: true
+            };
+        }
+
+        // ★ 追加：スキャナーが来る前の予兆演出
+        function drawScannerWaitEffect() {
+            // 残り3秒を切ったらパルスを始める
+            if (!isScanning && scannerWaitTimer > 0 && scannerWaitTimer <= 3000) {
+                let intensity = 1.0 - (scannerWaitTimer / 3000); // 0.0 -> 1.0 へ強くなる
+                let pulse = Math.abs(Math.sin(Date.now() * (0.005 + intensity * 0.01)));
+                let opacity = pulse * intensity * 0.15;
+                
+                // 画面全体のフラッシュ
+                ctx.fillStyle = `rgba(250, 204, 21, ${opacity})`;
+                ctx.fillRect(0, 0, width, height);
+                
+                // 中心のコアの発光
+                let coreRadius = CORE_RADIUS * Math.pow(SCALE_FACTOR, MIN_R + expansionProgress);
+                ctx.beginPath();
+                ctx.arc(cx, cy, Math.max(0.1, coreRadius + 15), 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${opacity * 2})`;
+                ctx.fill();
+            }
+        }
+
+        function drawScanner() {
+            if (!isScanning) return;
+            
+            let radius = CORE_RADIUS * Math.pow(SCALE_FACTOR, scannerFloatR + expansionProgress);
+            if (radius > Math.max(width, height) || radius < 1) return;
+
+            ctx.save();
+            let now = performance.now();
+            let pulse = 0.5 + Math.sin(now * 0.018) * 0.5;
+            let sweep = now * 0.003;
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+            ctx.lineWidth = 5 + pulse * 2;
+            ctx.strokeStyle = `rgba(250, 204, 21, ${0.68 + pulse * 0.18})`; 
+            ctx.stroke();
+
+            for (let i = 0; i < 3; i++) {
+                const start = sweep + i * (Math.PI * 2 / 3);
+                ctx.beginPath();
+                ctx.arc(cx, cy, radius, start, start + Math.PI * 0.36);
+                ctx.lineWidth = 7;
+                ctx.strokeStyle = `rgba(255, 255, 255, ${0.22 + pulse * 0.16})`;
+                ctx.stroke();
+            }
+
+            ctx.lineWidth = 1.5;
+            ctx.strokeStyle = 'rgba(103, 232, 249, 0.65)';
+            ctx.stroke();
+            ctx.restore();
+        }
+
+        function drawTurnPrompt() {
+            if (!turnPrompt) return;
+            const now = performance.now();
+            const p = (now - turnPrompt.startTime) / turnPrompt.duration;
+            if (p >= 1) {
+                turnPrompt = null;
+                return;
+            }
+
+            const fadeIn = Math.min(1, p / 0.18);
+            const fadeOut = Math.min(1, (1 - p) / 0.28);
+            const alpha = Math.max(0, Math.min(fadeIn, fadeOut));
+            const lift = -10 * p;
+            const scale = 1 + (1 - p) * 0.08;
+            const primarySize = Math.min(64, Math.max(34, Math.min(width, height) * 0.08));
+            const secondarySize = Math.min(18, Math.max(12, Math.min(width, height) * 0.024));
+
+            ctx.save();
+            ctx.translate(cx, cy + lift);
+            ctx.scale(scale, scale);
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.shadowColor = '#facc15';
+            ctx.shadowBlur = 12;
+            ctx.lineJoin = 'round';
+
+            ctx.font = `900 ${primarySize}px 'Brush Script MT', 'Snell Roundhand', 'Apple Chancery', 'Segoe Script', cursive`;
+            ctx.globalAlpha = alpha * 0.74;
+            ctx.lineWidth = Math.max(2, primarySize * 0.045);
+            ctx.strokeStyle = 'rgba(0, 0, 0, 0.42)';
+            ctx.strokeText(turnPrompt.primary, 0, -8);
+            ctx.fillStyle = turnPrompt.primary === 'SCAN' ? '#facc15' : '#ffffff';
+            ctx.fillText(turnPrompt.primary, 0, -8);
+
+            ctx.font = `800 ${secondarySize}px 'Brush Script MT', 'Snell Roundhand', 'Apple Chancery', 'Segoe Script', cursive`;
+            ctx.globalAlpha = alpha * 0.58;
+            ctx.shadowColor = '#06b6d4';
+            ctx.shadowBlur = 8;
+            ctx.fillStyle = '#67e8f9';
+            ctx.fillText(turnPrompt.secondary, 0, primarySize * 0.48);
+            ctx.restore();
+        }
+
+        function draw() {
+            ctx.fillStyle = '#000';
+            ctx.fillRect(0, 0, width, height);
+            
+            // ★ 予兆演出を背面に描画
+            drawScannerWaitEffect();
+
+            let drawItems = [];
+            const now = performance.now();
+
+            for (let r = MIN_R; r <= MAX_R; r++) {
+                let ringData = board[getI(r)];
+                let angleOffset = 0;
+                if (isDragging && dragMode === 'ROTATE' && r === dragRing) {
+                    angleOffset = dragAngleOffset;
+                } else if (isSnapping && snapMode === 'ROTATE' && r === snapRing) {
+                    angleOffset = currentSnapOffset;
+                }
+
+                for (let s = 0; s < SECTORS; s++) {
+                    let radiusOffset = 0;
+                    if (isDragging && dragMode === 'SHIFT' && s === dragSector) {
+                        radiusOffset = dragRadiusOffset;
+                    } else if (isSnapping && snapMode === 'SHIFT' && s === snapSector) {
+                        radiusOffset = currentSnapOffset;
+                    }
+
+                    let colorIdx = ringData[s];
+                    if (colorIdx === -1) continue; 
+
+                    let key = cellKey(r, s);
+                    let isHighlighting = blocksToClearKeys.has(key);
+                    let isLocked = lockedBoard[getI(r)][s];
+                    let litAt = litCellTimes.get(key) || 0;
+                    let reservedAt = reservedGlowTimes.get(key) || 0;
+
+                    let pathInfo = buildBlockPath(r, s, angleOffset, radiusOffset);
+                    if (pathInfo) {
+                        drawItems.push({
+                            r: r, s: s,
+                            colorIdx: colorIdx,
+                            isHighlighting: isHighlighting,
+                            isLocked: isLocked,
+                            isReserved: reservedMatchCells.has(key),
+                            litAt: litAt,
+                            reservedAt: reservedAt,
+                            pathInfo: pathInfo,
+                            isAnim: false
+                        });
+                    }
+                }
+            }
+
+            for (let anim of activeAnimations) {
+                if(anim.type !== 'highlight_wait' && anim.type !== 'snap_ring' && anim.type !== 'snap_sector') {
+                    let animItem = getAnimatedBlockPathInfo(anim);
+                    if (animItem) drawItems.push(animItem);
+                }
+            }
+
+            drawItems.sort((a, b) => a.pathInfo.floatR - b.pathInfo.floatR);
+
+            for (let item of drawItems) {
+                let { colorIdx, isHighlighting, isLocked, isReserved, litAt, reservedAt, pathInfo, isAnim, animType, animProgress } = item;
+                let displayR = pathInfo.floatR;
+                let depthAlpha = 1.0;
+                
+                if (displayR < 0) {
+                    depthAlpha = Math.max(0.1, 1.0 - (Math.abs(displayR) * 0.08));
+                } else if (displayR > MAX_R - 3) {
+                    depthAlpha = Math.max(0.0, 1.0 - (displayR - (MAX_R - 3)) / 3.0);
+                }
+
+                const reserveAge = reservedAt ? Math.max(0, now - reservedAt) : 0;
+                const reserveGlow = isReserved && reservedAt ? Math.max(0, 1 - reserveAge / 1200) : 0;
+                const litAge = litAt ? Math.max(0, now - litAt) : 0;
+                const litRise = litAt ? Math.max(0, Math.min(1, litAge / 420)) : 0;
+                const litFall = litAt ? Math.max(0, Math.min(1, 1 - Math.max(0, litAge - 420) / 1400)) : 0;
+                const litGlow = litRise * litFall;
+                const clearProgress = isHighlighting ? Math.max(0, Math.min(1, (now - clearFadeStart) / CLEAR_FADE_DURATION)) : 0;
+                const clearGlow = isHighlighting ? Math.max(0, 1 - clearProgress) : 0;
+                let lightness = 1.0;
+                if (isReserved) lightness += reserveGlow * 0.48;
+                if (isLocked) lightness += 0.16 + litGlow * 0.42;
+                if (isHighlighting) lightness += clearGlow * 0.46;
+                if (animType === 'charge') {
+                    const chargeGlow = Math.sin(Math.max(0, Math.min(1, animProgress)) * Math.PI);
+                    lightness += 0.18 + chargeGlow * 0.42;
+                }
+                lightness = Math.min(1.55, lightness);
+
+                let fadeAlpha = 1.0;
+                if (isHighlighting) {
+                    fadeAlpha = 1.0 - Math.max(0, (clearProgress - 0.25) / 0.75);
+                } else if (animType === 'charge') {
+                    fadeAlpha = 0.2 + Math.max(0, Math.min(1, animProgress)) * 0.8;
+                }
+
+                ctx.globalAlpha = depthAlpha * fadeAlpha;
+                ctx.fillStyle = getColorString(item.r, item.s, colorIdx, lightness);
+                ctx.fill(pathInfo.path);
+            }
+            
+            ctx.globalAlpha = 1.0;
+            drawScanner();
+
+            ctx.beginPath();
+            ctx.arc(cx, cy, 3, 0, Math.PI * 2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
+
+            drawTurnPrompt();
+        }
+
+        function gameLoop(timestamp) {
+            if (!timestamp) timestamp = performance.now();
+            let dt = timestamp - lastTime;
+            lastTime = timestamp;
+            if (dt > 100) dt = 16; 
+
+            update(dt);
+            draw();
+
+            animationId = requestAnimationFrame(gameLoop);
+        }
+
+        function updateScoreUI() {
+            document.getElementById('scoreVal').innerText = score;
+            reportScore(false);
+        }
+
+        // =====================================================
+        //  Portal / SDK integration (hiroakiishibashi.com)
+        //  - Embedded as an <iframe> on the portal: stream the score
+        //    to the parent via postMessage (SCORE_UPDATE); the portal's
+        //    scores.js persists it to the leaderboard. This is the
+        //    documented contract for iframe-embedded games.
+        //  - Hosted standalone / elsewhere: load the official HiroakiSDK
+        //    and save scores directly to the backend.
+        //  Fully playable even when neither path is available.
+        // =====================================================
+        const PORTAL_GAME_ID = 'fractas';
+        const inPortal = (window.parent && window.parent !== window);
+        let fractasSDK = null;
+        let _lastSentScore = -1;
+        let _lastSendTime = -100000;
+        const SEND_THROTTLE_MS = 10000; // 通常は10秒に1回まで（送信過多を防止）
+
+        function reportScore(force) {
+            if (score <= 0) return;
+            if (!inPortal && !fractasSDK) return;            // nowhere to report (yet)
+            if (score === _lastSentScore) return;            // never resend an identical score
+            const now = performance.now();
+            if (!force && now - _lastSendTime < SEND_THROTTLE_MS) return; // throttle in-play; leave/end bypass
+            _lastSentScore = score;
+            _lastSendTime = now;
+            const metadata = {
+                theme: currentThemeKey,
+                mode: 'turn3',
+                turnsPerCheck: TURNS_PER_CHECK,
+                turns: totalTurns,
+                checks: checkCount,
+                colorCount: activeColorCount
+            };
+            if (inPortal) {
+                // Embedded: portal scores.js saves this to the leaderboard
+                try {
+                    window.parent.postMessage({
+                        type: 'SCORE_UPDATE',
+                        game: PORTAL_GAME_ID,
+                        score: score,
+                        metadata: metadata
+                    }, '*');
+                } catch (e) { /* sandboxed / cross-origin: ignore */ }
+            } else if (fractasSDK) {
+                // Standalone: persist directly through the official SDK
+                try { fractasSDK.saveScore(score, metadata); } catch (e) { /* ignore */ }
+            }
+        }
+
+        // 離脱・タブ非表示時に確定スコアを必ず送る（モバイル対策で複数イベント登録）
+        window.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'hidden') reportScore(true);
+        });
+        window.addEventListener('pagehide', () => reportScore(true));
+        window.addEventListener('blur', () => reportScore(true));
+
+        // 単体ホスティング時のみ公式SDKを読み込む（ポータル埋め込み時はpostMessageで充足）
+        if (!inPortal) {
+            import('https://hiroakiishibashi.com/sdk/html/hiroakiishibashi-sdk.js')
+                .then(m => new m.default({ gameId: PORTAL_GAME_ID }).init())
+                .then(sdk => { fractasSDK = sdk; })
+                .catch(e => console.warn('[Fractas] SDK unavailable (standalone score saving disabled):', e && e.message));
+        }
+
+        // ---- 操作ヒントの自動消去 ----
+        const hintEl = document.getElementById('hint');
+        let hintDismissed = false;
+        function dismissHint() {
+            if (hintDismissed || !hintEl) return;
+            hintDismissed = true;
+            hintEl.classList.add('hidden');
+            setTimeout(() => { if (hintEl) hintEl.style.display = 'none'; }, 700);
+        }
+        canvas.addEventListener('mousedown', dismissHint, { once: true });
+        canvas.addEventListener('touchstart', dismissHint, { once: true, passive: true });
+        setTimeout(dismissHint, 8000); // 操作がなくても8秒で消す
+
+        const gameOverEl = document.getElementById('gameOver');
+        if (gameOverEl) {
+            gameOverEl.addEventListener('click', resetGame);
+            gameOverEl.addEventListener('touchstart', (e) => {
+                if (e.cancelable) e.preventDefault();
+                resetGame();
+            }, { passive: false });
+        }
+
+        resetGame();
+
+    </script>
+</body>
+</html>
