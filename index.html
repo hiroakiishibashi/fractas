@@ -131,7 +131,6 @@
             color: #facc15;
             transform: scale(1.04);
         }
-        /* --- Brand watermark --- */
         #brand {
             position: absolute;
             bottom: 14px;
@@ -147,7 +146,6 @@
             text-transform: uppercase;
             font-family: var(--fractas-script-font);
         }
-        /* --- Control hint overlay (auto-dismisses) --- */
         #hint {
             position: absolute;
             inset: 0;
@@ -338,12 +336,12 @@
     <div id="hint">
         <div class="hint-title">FRACTAS</div>
         <div class="hint-row">
-            <span class="hint-chip">🖱 Drag squares — attach to edge or corner</span>
+            <span class="hint-chip">🖱 Drag squares — slides smoothly along connected edges</span>
         </div>
         <div class="hint-row">
             <span class="hint-chip">⏹ Match 4 same-sized squares into 2×2 to clear!</span>
         </div>
-        <div class="hint-sub">Make 3 moves. Spawning squares expand the cluster outward.</div>
+        <div class="hint-sub">Make 3 moves. Squares grow & expand the cluster continuously.</div>
     </div>
 
     <div id="gameOver">
@@ -416,8 +414,6 @@
         let dragBlock = null;
         let dragOffsetX = 0;
         let dragOffsetY = 0;
-        let dragCurrentPx = 0;
-        let dragCurrentPy = 0;
         let snapCandidate = null;
 
         // オーディオ管理
@@ -496,10 +492,11 @@
             return !(x1 + s1 <= x2 || x2 + s2 <= x1 || y1 + s1 <= y2 || y2 + s2 <= y1);
         }
 
-        // 矩形同士の接触（辺または角を共有）判定
-        function touches(x1, y1, s1, x2, y2, s2) {
-            const isDisjoint = (x1 + s1 < x2 || x2 + s2 < x1 || y1 + s1 < y2 || y2 + s2 < y1);
-            return !isDisjoint;
+        // 矩形同士の「辺」での接触（長さ1以上の辺を共有）判定
+        function hasEdgeContact(x1, y1, s1, x2, y2, s2) {
+            const vertEdge = (x1 + s1 === x2 || x2 + s2 === x1) && (Math.max(y1, y2) < Math.min(y1 + s1, y2 + s2));
+            const horizEdge = (y1 + s1 === y2 || y2 + s2 === y1) && (Math.max(x1, x2) < Math.min(x1 + s1, x2 + s2));
+            return vertEdge || horizEdge;
         }
 
         // 指定位置(testGx, testGy)にブロックを配置可能か検証
@@ -517,17 +514,18 @@
                     return false;
                 }
             }
-            let isConnected = touches(testGx, testGy, size, -1, -1, 2);
-            if (!isConnected) {
+            // 必ず「辺（LINE EDGE）」で他ブロックまたはコアに密着していること！
+            let isEdgeConnected = hasEdgeContact(testGx, testGy, size, -1, -1, 2);
+            if (!isEdgeConnected) {
                 for (let b of blocks) {
                     if (b.id === ignoreId || b.clearing) continue;
-                    if (touches(testGx, testGy, size, b.gx, b.gy, b.size)) {
-                        isConnected = true;
+                    if (hasEdgeContact(testGx, testGy, size, b.gx, b.gy, b.size)) {
+                        isEdgeConnected = true;
                         break;
                     }
                 }
             }
-            return isConnected;
+            return isEdgeConnected;
         }
 
         function createBlock(gx, gy, size = 1, colorIdx = 0) {
@@ -535,10 +533,13 @@
                 id: nextBlockId++,
                 gx: gx,
                 gy: gy,
-                size: size,
-                colorIdx: colorIdx,
+                targetGx: gx,
+                targetGy: gy,
                 animGx: gx,
                 animGy: gy,
+                size: size,
+                displaySize: size, // じわじわ拡大用の連続値
+                colorIdx: colorIdx,
                 scale: 1.0,
                 clearing: false,
                 clearProgress: 0
@@ -728,16 +729,17 @@
             updateScoreUI();
         }
 
+        // じわじわと大きくなる成長＆辺配置スポーン
         function growCluster() {
             checkCount++;
             playGrowSfx();
 
+            // 1. 中心に近い size=1 ブロックの目標サイズ変更 (1 -> 2)
             const smallBlocks = blocks.filter(b => !b.clearing && b.size === 1);
             if (smallBlocks.length > 0) {
                 smallBlocks.sort((a, b) => (a.gx*a.gx + a.gy*a.gy) - (b.gx*b.gx + b.gy*b.gy));
                 const target = smallBlocks[0];
-                target.size = 2;
-                target.scale = 1.2;
+                target.size = 2; // targetSizeを2に変更し、update()でじわじわ大きく描画
 
                 for (let b of blocks) {
                     if (b.id === target.id || b.clearing) continue;
@@ -746,13 +748,17 @@
                         const dy = b.gy >= target.gy ? 1 : -1;
                         b.gx += dx;
                         b.gy += dy;
+                        b.targetGx = b.gx;
+                        b.targetGy = b.gy;
                     }
                 }
             }
 
+            // 2. 厳密に「辺」に面した位置に新ブロックをスポーン
             const spawnCandidates = [
                 {gx: -2, gy: -1}, {gx: -2, gy: 0}, {gx: 1, gy: -1}, {gx: 1, gy: 0},
-                {gx: -1, gy: -2}, {gx: 0, gy: -2}, {gx: -1, gy: 1}, {gx: 0, gy: 1}
+                {gx: -1, gy: -2}, {gx: 0, gy: -2}, {gx: -1, gy: 1}, {gx: 0, gy: 1},
+                {gx: -3, gy: -1}, {gx: 2, gy: 0}, {gx: 0, gy: -3}, {gx: 0, gy: 2}
             ];
             
             for (let cand of spawnCandidates) {
@@ -760,7 +766,7 @@
                 if (isValidPosition(dummy, cand.gx, cand.gy)) {
                     const colorIdx = Math.floor(Math.random() * activeColorCount);
                     const newB = createBlock(cand.gx, cand.gy, 1, colorIdx);
-                    newB.scale = 0.2;
+                    newB.displaySize = 0.2; // 0.2から1.0へじわじわ成長
                     blocks.push(newB);
                     break;
                 }
@@ -785,6 +791,7 @@
             isClearing = false;
             chainCount = 0;
 
+            // 初期配置：厳密にコアの「辺」に接した4マス
             const initialCoords = [
                 {gx: -2, gy: -1, s: 1, c: 0},
                 {gx: 1, gy: 0, s: 1, c: 1},
@@ -935,14 +942,12 @@
                 const b = blocks[i];
                 if (b.clearing) continue;
                 const pos = getPxPos(b.animGx, b.animGy);
-                const bWidth = b.size * GRID_CELL_SIZE;
+                const bWidth = b.displaySize * GRID_CELL_SIZE;
                 if (pointerX >= pos.px && pointerX <= pos.px + bWidth &&
                     pointerY >= pos.py && pointerY <= pos.py + bWidth) {
                     dragBlock = b;
                     dragOffsetX = pointerX - pos.px;
                     dragOffsetY = pointerY - pos.py;
-                    dragCurrentPx = pos.px;
-                    dragCurrentPy = pos.py;
                     playMoveSfx();
                     break;
                 }
@@ -956,8 +961,8 @@
             const pointerX = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
             const pointerY = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
 
-            dragCurrentPx = pointerX - dragOffsetX;
-            dragCurrentPy = pointerY - dragOffsetY;
+            const dragCurrentPx = pointerX - dragOffsetX;
+            const dragCurrentPy = pointerY - dragOffsetY;
 
             const rawGx = Math.round((dragCurrentPx - cx) / GRID_CELL_SIZE);
             const rawGy = Math.round((dragCurrentPy - cy) / GRID_CELL_SIZE);
@@ -965,8 +970,9 @@
             snapCandidate = null;
             let minDist = Number.POSITIVE_INFINITY;
 
-            for (let dgx = -2; dgx <= 2; dgx++) {
-                for (let dgy = -2; dgy <= 2; dgy++) {
+            // ドラッグ中も「辺に接する有効位置」のみを探索してスムーズ滑り移動
+            for (let dgx = -3; dgx <= 3; dgx++) {
+                for (let dgy = -3; dgy <= 3; dgy++) {
                     const testGx = rawGx + dgx;
                     const testGy = rawGy + dgy;
                     if (isValidPosition(dragBlock, testGx, testGy, dragBlock.id)) {
@@ -979,6 +985,11 @@
                     }
                 }
             }
+
+            if (snapCandidate) {
+                dragBlock.targetGx = snapCandidate.gx;
+                dragBlock.targetGy = snapCandidate.gy;
+            }
         }
 
         function onPointerUp() {
@@ -988,6 +999,8 @@
                 const moved = (dragBlock.gx !== snapCandidate.gx || dragBlock.gy !== snapCandidate.gy);
                 dragBlock.gx = snapCandidate.gx;
                 dragBlock.gy = snapCandidate.gy;
+                dragBlock.targetGx = snapCandidate.gx;
+                dragBlock.targetGy = snapCandidate.gy;
 
                 if (moved) {
                     playSnapSfx();
@@ -1021,13 +1034,12 @@
 
         function drawBlock(b, overridePx = null, overridePy = null, isGhost = false) {
             const pos = overridePx !== null ? { px: overridePx, py: overridePy } : getPxPos(b.animGx, b.animGy);
-            const sizePx = b.size * GRID_CELL_SIZE;
+            const sizePx = b.displaySize * GRID_CELL_SIZE;
             const theme = THEMES[currentThemeKey];
             const color = theme.colors[b.colorIdx % theme.colors.length];
 
             ctx.save();
             ctx.translate(pos.px + sizePx / 2, pos.py + sizePx / 2);
-            if (b.scale !== 1.0) ctx.scale(b.scale, b.scale);
 
             if (isGhost) {
                 ctx.globalAlpha = 0.45;
@@ -1061,7 +1073,7 @@
 
                 if (b.size > 1) {
                     ctx.fillStyle = '#ffffff';
-                    ctx.font = `bold ${Math.max(12, 14 * b.size)}px var(--fractas-script-font)`;
+                    ctx.font = `bold ${Math.max(12, 14 * b.displaySize)}px var(--fractas-script-font)`;
                     ctx.textAlign = 'center';
                     ctx.textBaseline = 'middle';
                     ctx.fillText(`${b.size}×${b.size}`, 0, 0);
@@ -1112,11 +1124,11 @@
 
         function update() {
             for (let b of blocks) {
-                b.animGx += (b.gx - b.animGx) * 0.25;
-                b.animGy += (b.gy - b.animGy) * 0.25;
-                if (b.scale > 1.0) {
-                    b.scale += (1.0 - b.scale) * 0.1;
-                }
+                // スムーズ位置移動（ドラッグ中も辺に沿って滑る）
+                b.animGx += (b.targetGx - b.animGx) * 0.35;
+                b.animGy += (b.targetGy - b.animGy) * 0.35;
+                // じわじわと滑らかに大きくなる補間
+                b.displaySize += (b.size - b.displaySize) * 0.08;
             }
         }
 
@@ -1130,12 +1142,7 @@
             }
 
             for (let b of blocks) {
-                if (b === dragBlock) continue;
                 drawBlock(b);
-            }
-
-            if (dragBlock) {
-                drawBlock(dragBlock, dragCurrentPx, dragCurrentPy);
             }
         }
 
