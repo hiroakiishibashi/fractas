@@ -6,6 +6,11 @@
     <meta name="page-title" content="Fractas">
     <meta name="description" content="Fractas — an expanding connected square cluster puzzle. Drag squares along connected edges and match 4 same-sized squares into 2×2 blocks to clear.">
     <title>Fractas</title>
+    <!-- 表示言語をポータルの設定に合わせる（docs/game-language-spec.md）。Fractas は英語のみなので常に 'en' -->
+    <script src="hi-game-lang.js"></script>
+    <script>
+        var LANG = (window.HiLang && HiLang.init({ id: 'fractas', langs: ['en'] })) || 'en';
+    </script>
     <style>
         :root {
             --fractas-script-font: 'Brush Script MT', 'Snell Roundhand', 'Apple Chancery', 'Segoe Script', cursive;

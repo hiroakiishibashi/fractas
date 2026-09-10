@@ -117,11 +117,20 @@ still plays; a single console warning is logged).
 
 ### Sync command (dev → portal)
 
+> ⚠️ **Read before syncing (2026-09-11).** On 2026-07-27 `main` pivoted to an unpublished
+> square-cluster prototype (`3b3c201` onward). The portal still runs the turn-based radial
+> version: commit `6a1e28a` plus the language wiring. **Running the command below replaces the
+> published game** (and its leaderboard) — get the owner's OK first.
+>
+> `hi-game-lang.js` is the portal language SDK (`docs/game-language-spec.md` in
+> hiroakiishibashi-web). Always copy it together with `index.html`, byte-for-byte unchanged —
+> `node tools/test-game-lang.mjs` fails if the bundled copy drifts from the SDK.
+
 After editing the canonical `index.html`, copy it into the portal:
 
 ```bash
-cp /Volumes/PINK/Development/Fractas/index.html \
-   /Volumes/PINK/Development/hiroakiishibashi-web/games/fractas/game/index.html
+cp /Volumes/PINK/Development/Fractas/{index.html,hi-game-lang.js} \
+   /Volumes/PINK/Development/hiroakiishibashi-web/games/fractas/game/
 ```
 
 ---
