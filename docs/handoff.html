@@ -1,0 +1,3595 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fractas 引き継ぎ書</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&family=IBM+Plex+Mono:wght@400;600&family=Kaushan+Script&display=swap">
+<style>
+:root{
+  --ground:#f4f3f9;--surface:#ffffff;--ink:#1b1930;--muted:#5b5874;--line:#dedbeb;
+  --accent:#5b34c9;--accent-soft:#ece6fd;--warn:#8a5300;--warn-soft:#fdf2d6;
+  --ok:#1d7a45;--ok-soft:#e3f4ea;--code-bg:#efedf7;--scan:#c28a00;color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --ground:#0f0d1a;--surface:#17142a;--ink:#ebe8f7;--muted:#a39fbe;--line:#2c2844;
+  --accent:#b39cff;--accent-soft:#241c44;--warn:#f5c542;--warn-soft:#2c2410;
+  --ok:#62d394;--ok-soft:#10271b;--code-bg:#1c1832;--scan:#facc15;color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --ground:#0f0d1a;--surface:#17142a;--ink:#ebe8f7;--muted:#a39fbe;--line:#2c2844;
+  --accent:#b39cff;--accent-soft:#241c44;--warn:#f5c542;--warn-soft:#2c2410;
+  --ok:#62d394;--ok-soft:#10271b;--code-bg:#1c1832;--scan:#facc15;color-scheme:dark;}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%;scroll-behavior:smooth}
+body{margin:0;background:var(--ground);color:var(--ink);
+  font-family:"BIZ UDPGothic","Hiragino Sans","Hiragino Kaku Gothic ProN","Noto Sans JP",system-ui,sans-serif;
+  font-size:16px;line-height:1.85;padding-inline:16px}
+.masthead{max-width:1180px;margin:0 auto;padding-block:28px 22px;display:flex;gap:18px;align-items:center;border-bottom:1px solid var(--line)}
+.mark{width:68px;height:68px;flex:none}
+.mark .ring{fill:none;stroke:var(--accent);stroke-width:1;opacity:.7}
+.mark .spoke{stroke:var(--accent);stroke-width:.8;opacity:.4}
+.mark .scan{fill:none;stroke:var(--scan);stroke-width:2.2}
+.brand{min-width:0}
+.wordmark{font-family:"Kaushan Script","Brush Script MT","Snell Roundhand",cursive;font-weight:400;
+  font-size:clamp(34px,6vw,50px);line-height:1;margin:0;letter-spacing:.01em}
+.sub{margin:.4rem 0 0;color:var(--muted);font-size:14px;line-height:1.6}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;font-size:13px;line-height:1.45;padding:4px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:var(--muted);flex:none}
+.chip.live{background:var(--ok-soft);border-color:color-mix(in srgb,var(--ok) 40%,var(--line))}
+.chip.live .dot{background:var(--ok)}
+.chip.hold{background:var(--warn-soft);border-color:color-mix(in srgb,var(--warn) 40%,var(--line))}
+.chip.hold .dot{background:var(--warn)}
+.chip code{font-size:12px;white-space:nowrap}
+.layout{max-width:1180px;margin:0 auto;display:grid;grid-template-columns:minmax(0,1fr);gap:28px;padding-block:24px 56px}
+@media (min-width:1080px){.layout{grid-template-columns:250px minmax(0,1fr)}
+  .toc{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow:auto}}
+.toc{font-size:14px;line-height:1.6;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;align-self:start}
+.toc>summary{font-weight:700;cursor:pointer}
+.toc ol{list-style:none;margin:6px 0 0;padding:0}
+.toc>ol>li{margin:6px 0}
+.toc a{color:var(--ink);text-decoration:none}
+.toc a:hover{color:var(--accent);text-decoration:underline}
+.toc details{margin:2px 0 0 10px}
+.toc details summary{cursor:pointer;color:var(--muted);font-size:12.5px}
+.toc details ol{margin:2px 0 4px 6px}
+.toc details li{font-size:13px}
+article{min-width:0;max-width:48em}
+.doc{margin-bottom:56px}
+.doc+.doc{border-top:2px solid var(--line);padding-top:30px}
+.eyebrow{font-family:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;font-size:12px;letter-spacing:.05em;color:var(--accent);margin:0}
+h1,h2,h3,h4{text-wrap:balance;line-height:1.45;font-weight:700}
+h1{font-size:28px;margin:.15em 0 .7em}
+h2{font-size:21px;margin:2.2em 0 .6em;padding-bottom:.3em;border-bottom:1px solid var(--line)}
+h3{font-size:17px;margin:1.8em 0 .5em}
+p,li{overflow-wrap:anywhere}
+ul,ol{padding-left:1.4em}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+code{font-family:"IBM Plex Mono",ui-monospace,"SF Mono",Menlo,monospace;font-size:.86em;background:var(--code-bg);padding:.08em .35em;border-radius:4px}
+pre{position:relative;background:var(--code-bg);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;line-height:1.6;font-size:13.5px;margin:1em 0}
+pre code{background:none;padding:0;font-size:inherit}
+.copy{position:absolute;top:6px;right:6px;font:700 12px/1 "BIZ UDPGothic",system-ui,sans-serif;padding:6px 9px;border-radius:6px;border:1px solid var(--line);background:var(--surface);color:var(--ink);cursor:pointer}
+.copy:hover{border-color:var(--accent);color:var(--accent)}
+.tbl{overflow-x:auto;margin:1em 0;border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:14.5px;line-height:1.6;font-variant-numeric:tabular-nums}
+th,td{padding:8px 12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line)}
+thead th{background:var(--accent-soft);white-space:nowrap}
+tbody tr:last-child td{border-bottom:0}
+blockquote{margin:1.2em 0;padding:10px 16px;border-left:4px solid var(--warn);background:var(--warn-soft);border-radius:0 8px 8px 0}
+blockquote p{margin:.3em 0}
+hr{border:0;border-top:1px solid var(--line);margin:2.2em 0}
+.foot{max-width:1180px;margin:0 auto;padding-block:20px 40px;color:var(--muted);font-size:13px;border-top:1px solid var(--line)}
+@media (max-width:600px){body{font-size:15.5px}h1{font-size:23px}h2{font-size:19px}pre{font-size:12.5px}.mark{width:52px;height:52px}}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<header class="masthead"><svg class="mark" viewBox="0 0 64 64" role="img" aria-label="12 セクターと 1.25 倍ずつ広がる輪"><line class="spoke" x1="35.20" y1="32.00" x2="62.20" y2="32.00"/><line class="spoke" x1="34.77" y1="33.60" x2="58.15" y2="47.10"/><line class="spoke" x1="33.60" y1="34.77" x2="47.10" y2="58.15"/><line class="spoke" x1="32.00" y1="35.20" x2="32.00" y2="62.20"/><line class="spoke" x1="30.40" y1="34.77" x2="16.90" y2="58.15"/><line class="spoke" x1="29.23" y1="33.60" x2="5.85" y2="47.10"/><line class="spoke" x1="28.80" y1="32.00" x2="1.80" y2="32.00"/><line class="spoke" x1="29.23" y1="30.40" x2="5.85" y2="16.90"/><line class="spoke" x1="30.40" y1="29.23" x2="16.90" y2="5.85"/><line class="spoke" x1="32.00" y1="28.80" x2="32.00" y2="1.80"/><line class="spoke" x1="33.60" y1="29.23" x2="47.10" y2="5.85"/><line class="spoke" x1="34.77" y1="30.40" x2="58.15" y2="16.90"/><circle class="ring" cx="32" cy="32" r="3.20"/><circle class="ring" cx="32" cy="32" r="4.00"/><circle class="ring" cx="32" cy="32" r="5.00"/><circle class="ring" cx="32" cy="32" r="6.25"/><circle class="ring" cx="32" cy="32" r="7.81"/><circle class="ring" cx="32" cy="32" r="9.77"/><circle class="scan" cx="32" cy="32" r="12.21"/><circle class="ring" cx="32" cy="32" r="15.26"/><circle class="ring" cx="32" cy="32" r="19.07"/><circle class="ring" cx="32" cy="32" r="23.84"/><circle class="ring" cx="32" cy="32" r="29.80"/></svg><div class="brand"><p class="wordmark">Fractas</p><p class="sub">引き継ぎ書 ・ 2026-09-15 ・ game_id <code>fractas</code> ・ 正本 <a href="https://github.com/hiroakiishibashi/fractas/tree/main/docs">hiroakiishibashi/fractas/docs</a></p><div class="chips"><span class="chip live"><span class="dot"></span>公開中: ラジアル版 <code>portal-radial</code></span><span class="chip hold"><span class="dot"></span><code>main</code> = 正方形版・ポータル未公開</span><span class="chip"><span class="dot"></span>判断待ち D1, D2, D3, D4, D5</span></div></div></header><div class="layout"><nav aria-label="目次"><details class="toc" open><summary>目次</summary><ol><li><a href="#doc-handoff">引き継ぎ書</a><details><summary>節を見る</summary><ol><li><a href="#doc-handoff-0-30秒でわかる現状">0. 30秒でわかる現状</a></li><li><a href="#doc-handoff-1-最初の10分でやること">1. 最初の10分でやること</a></li><li><a href="#doc-handoff-2-fractas-とは">2. Fractas とは</a></li><li><a href="#doc-handoff-3-2つの版">3. 2つの版</a></li><li><a href="#doc-handoff-4-どこに何があるか地図">4. どこに何があるか（地図）</a></li><li><a href="#doc-handoff-5-公開中の版ラジアルがポータルで動くしくみ">5. 公開中の版（ラジアル）がポータルで動くしくみ</a></li><li><a href="#doc-handoff-6-正方形版mainの状態">6. 正方形版（main）の状態</a></li><li><a href="#doc-handoff-7-破ってはいけない約束理由つき">7. 破ってはいけない約束（理由つき）</a></li><li><a href="#doc-handoff-8-よくある作業">8. よくある作業</a></li><li><a href="#doc-handoff-9-確かめ方">9. 確かめ方</a></li><li><a href="#doc-handoff-10-オーナーの判断待ち">10. オーナーの判断待ち</a></li><li><a href="#doc-handoff-11-このスレッドだけが知っていたこと">11. このスレッドだけが知っていたこと</a></li><li><a href="#doc-handoff-12-用語集">12. 用語集</a></li><li><a href="#doc-handoff-13-資料の置き場所どれも同じ内容">13. 資料の置き場所（どれも同じ内容）</a></li></ol></details></li><li><a href="#doc-runbook">手順書</a><details><summary>節を見る</summary><ol><li><a href="#doc-runbook-r0-準備">R0. 準備</a></li><li><a href="#doc-runbook-r1-いまの状態を確かめる読むだけ">R1. いまの状態を確かめる（読むだけ）</a></li><li><a href="#doc-runbook-r2-公開中のゲームラジアル版を直して出す">R2. 公開中のゲーム（ラジアル版）を直して出す</a></li><li><a href="#doc-runbook-r3-未公開のラジアル改良ce073ced282cb6を入れる">R3. 未公開のラジアル改良（ce073ce・d282cb6）を入れる</a></li><li><a href="#doc-runbook-r4-言語sdkが新しくなったとき">R4. 言語SDKが新しくなったとき</a></li><li><a href="#doc-runbook-r5-翻訳日本語などを足す">R5. 翻訳（日本語など）を足す</a></li><li><a href="#doc-runbook-r6-正方形版をポータルに出す">R6. 正方形版をポータルに出す</a></li><li><a href="#doc-runbook-r7-github-pages正方形版を直す">R7. GitHub Pages（正方形版）を直す</a></li><li><a href="#doc-runbook-r8-本番を前の版に戻す">R8. 本番を前の版に戻す</a></li><li><a href="#doc-runbook-r9-サムネプレイ動画を撮り直す">R9. サムネ・プレイ動画を撮り直す</a></li><li><a href="#doc-runbook-r10-困ったとき">R10. 困ったとき</a></li></ol></details></li><li><a href="#doc-pitfalls">踏んだ罠</a><details><summary>節を見る</summary><ol><li><a href="#doc-pitfalls-p1-同期コマンドで別のゲームに入れ替わる">P1. 同期コマンドで別のゲームに入れ替わる</a></li><li><a href="#doc-pitfalls-p2-古い-pr-の版で演出が巻き戻る">P2. 古い PR の版で演出が巻き戻る</a></li><li><a href="#doc-pitfalls-p3-言語sdkのコピーがずれて検査が落ちる">P3. 言語SDKのコピーがずれて検査が落ちる</a></li><li><a href="#doc-pitfalls-p4-ゲームが-preferred_lang-を書いてしまう">P4. ゲームが preferred_lang を書いてしまう</a></li><li><a href="#doc-pitfalls-p5-wrangler-deploy-で他の人の変更が消える">P5. wrangler deploy で他の人の変更が消える</a></li><li><a href="#doc-pitfalls-p6-直したのに古い内容が見えるキャッシュ">P6. 直したのに古い内容が見える（キャッシュ）</a></li><li><a href="#doc-pitfalls-p7-pink-で-git-が-operation-not-permitted">P7. PINK で git が Operation not permitted</a></li><li><a href="#doc-pitfalls-p8-pink-のポータルのクローンが不整合">P8. PINK のポータルのクローンが不整合</a></li><li><a href="#doc-pitfalls-p9-手元の-npx-serve-で-sdk-が-404">P9. 手元の npx serve で SDK が 404</a></li><li><a href="#doc-pitfalls-p10-ヘッドレスでタイマーが進まない">P10. ヘッドレスでタイマーが進まない</a></li><li><a href="#doc-pitfalls-p11-ポータルの外で遊んだ点がランキングに出ない">P11. ポータルの外で遊んだ点がランキングに出ない</a></li><li><a href="#doc-pitfalls-p12-ランキングに昔の版の点が混ざる">P12. ランキングに昔の版の点が混ざる</a></li><li><a href="#doc-pitfalls-p13-actions-が緑なのに配信されていない">P13. Actions が緑なのに配信されていない</a></li><li><a href="#doc-pitfalls-p14-gh-pr-create-が回数制限で失敗">P14. gh pr create が回数制限で失敗</a></li><li><a href="#doc-pitfalls-p15-手元で-cdn-cgitrace-が-404">P15. 手元で /cdn-cgi/trace が 404</a></li><li><a href="#doc-pitfalls-p16-別の環境が-main-に-push-している">P16. 別の環境が main に push している</a></li><li><a href="#doc-pitfalls-p17-外部のライブラリがポータルで読めない">P17. 外部のライブラリがポータルで読めない</a></li><li><a href="#doc-pitfalls-p18-作業のゴミ43mbがフォルダにある">P18. 作業のゴミ（43MB）がフォルダにある</a></li><li><a href="#doc-pitfalls-p19-ブランチを切り替えたら資料と道具が消えた">P19. ブランチを切り替えたら資料と道具が消えた</a></li></ol></details></li><li><a href="#doc-decisions">決まったこと・判断待ち</a><details><summary>節を見る</summary><ol><li><a href="#doc-decisions-判断待ちオーナー">判断待ち（オーナー）</a></li><li><a href="#doc-decisions-決まったことなぜそうしたか">決まったこと（なぜそうしたか）</a></li></ol></details></li><li><a href="#doc-prompts">貼る文</a><details><summary>節を見る</summary><ol><li><a href="#doc-prompts-0-どの作業でもまずこれ入り方">0. どの作業でも、まずこれ（入り方）</a></li><li><a href="#doc-prompts-1-状態を点検するだけ何も変えない">1. 状態を点検するだけ（何も変えない）</a></li><li><a href="#doc-prompts-2-公開中のゲームラジアル版を直す">2. 公開中のゲーム（ラジアル版）を直す</a></li><li><a href="#doc-prompts-3-未公開のラジアル改良ハイスコアミュートを出す">3. 未公開のラジアル改良（ハイスコア・ミュート）を出す</a></li><li><a href="#doc-prompts-4-翻訳を足す">4. 翻訳を足す</a></li><li><a href="#doc-prompts-5-正方形版をポータルに出す">5. 正方形版をポータルに出す</a></li><li><a href="#doc-prompts-6-サムネプレイ動画を撮り直す">6. サムネ・プレイ動画を撮り直す</a></li><li><a href="#doc-prompts-7-本番がおかしいとき">7. 本番がおかしいとき</a></li><li><a href="#doc-prompts-8-オーナーへの報告の型">8. オーナーへの報告の型</a></li></ol></details></li><li><a href="#doc-codemap">コードの地図</a><details><summary>節を見る</summary><ol><li><a href="#doc-codemap-1-ファイルの形2つの版で同じ">1. ファイルの形（2つの版で同じ）</a></li><li><a href="#doc-codemap-2-ラジアル版公開中ブランチ-portal-radial">2. ラジアル版（公開中・ブランチ portal-radial）</a></li><li><a href="#doc-codemap-3-正方形版main">3. 正方形版（main）</a></li><li><a href="#doc-codemap-4-1ファイルを読むときのコツ">4. 1ファイルを読むときのコツ</a></li></ol></details></li><li><a href="#doc-codemap-portal-radial">索引: 公開中のラジアル版</a><details><summary>節を見る</summary><ol><li><a href="#doc-codemap-portal-radial-ファイルの区切り">ファイルの区切り</a></li><li><a href="#doc-codemap-portal-radial-コメントの目印">コメントの目印</a></li><li><a href="#doc-codemap-portal-radial-定数調整つまみ">定数（調整つまみ）</a></li><li><a href="#doc-codemap-portal-radial-関数62-個">関数（62 個）</a></li><li><a href="#doc-codemap-portal-radial-dom-の-idhtml-の部品">DOM の id（HTML の部品）</a></li><li><a href="#doc-codemap-portal-radial-画面に出る文字翻訳するならここ">画面に出る文字（翻訳するならここ）</a></li><li><a href="#doc-codemap-portal-radial-端末に保存するキーlocalstorage">端末に保存するキー（localStorage）</a></li><li><a href="#doc-codemap-portal-radial-イベント入力ページの出入り">イベント（入力・ページの出入り）</a></li><li><a href="#doc-codemap-portal-radial-親ポータルへ送るメッセージ">親（ポータル）へ送るメッセージ</a></li></ol></details></li><li><a href="#doc-codemap-main">索引: main（正方形版）</a><details><summary>節を見る</summary><ol><li><a href="#doc-codemap-main-ファイルの区切り">ファイルの区切り</a></li><li><a href="#doc-codemap-main-コメントの目印">コメントの目印</a></li><li><a href="#doc-codemap-main-定数調整つまみ">定数（調整つまみ）</a></li><li><a href="#doc-codemap-main-関数39-個">関数（39 個）</a></li><li><a href="#doc-codemap-main-dom-の-idhtml-の部品">DOM の id（HTML の部品）</a></li><li><a href="#doc-codemap-main-画面に出る文字翻訳するならここ">画面に出る文字（翻訳するならここ）</a></li><li><a href="#doc-codemap-main-端末に保存するキーlocalstorage">端末に保存するキー（localStorage）</a></li><li><a href="#doc-codemap-main-イベント入力ページの出入り">イベント（入力・ページの出入り）</a></li><li><a href="#doc-codemap-main-親ポータルへ送るメッセージ">親（ポータル）へ送るメッセージ</a></li></ol></details></li><li><a href="#doc-history">年表</a><details><summary>節を見る</summary><ol><li><a href="#doc-history-くわしく">くわしく</a></li></ol></details></li></ol></details></nav><article><section class="doc" id="doc-handoff"><p class="eyebrow">docs/HANDOFF.md</p><h1 id="doc-handoff-fractas-引き継ぎ書">Fractas 引き継ぎ書</h1>
+<ul>
+<li>作成: 2026-09-15（Claude Code のプランが下がる前日に、このスレッドの内容をすべて書き残したもの）</li>
+<li>読む人: Fractas の開発・保守を引き継ぐ人とAI（どの性能のモデルでも読めるように、短い文で書いています）</li>
+<li>正本: この文書（<code>hiroakiishibashi/fractas</code> の <code>docs/HANDOFF.md</code>・ブランチ <code>main</code>）</li>
+<li>写しの場所: この文書の「13. 資料の置き場所」</li>
+</ul>
+<blockquote>
+<p><strong>English summary.</strong> Fractas is a small single-file HTML5 canvas puzzle game (game_id <code>fractas</code>).
+This repo holds two different games: the <strong>radial turn-based match-3</strong> that hiroakiishibashi.com
+serves (source of truth: branch <code>portal-radial</code>, tag <code>portal-live-2026-09-11</code>), and on <code>main</code> an
+unpublished <strong>square-cluster</strong> prototype that is only served on GitHub Pages. Never copy <code>main</code>
+to the portal without the owner's approval. Publishing to the portal = branch → PR → merge in
+<code>hiroakiishibashi/hiroakiishibashi-web</code> (GitHub Actions deploys). Start with <code>bash scripts/status.sh</code>.</p>
+</blockquote>
+<hr />
+<h2 id="doc-handoff-0-30秒でわかる現状">0. 30秒でわかる現状</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>項目</th>
+<th>いま（2026-09-15）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ポータルで公開中</td>
+<td><strong>ラジアル版</strong>（ターン制の円形マッチ3）… https://hiroakiishibashi.com/games/fractas/</td>
+</tr>
+<tr>
+<td>その正本</td>
+<td>このリポジトリのブランチ <strong><code>portal-radial</code></strong>（タグ <strong><code>portal-live-2026-09-11</code></strong> が公開中そのもの）</td>
+</tr>
+<tr>
+<td>公開中の版を直すフォルダ</td>
+<td><strong><code>/Volumes/PINK/Development/Fractas-portal-radial/</code></strong>（<code>portal-radial</code> を開いた別フォルダ。資料と道具は <code>/Volumes/PINK/Development/Fractas/</code>＝<code>main</code> にある）</td>
+</tr>
+<tr>
+<td><code>main</code> の中身</td>
+<td><strong>正方形版</strong>（2×2 で消す、別のゲーム）。ポータルには出していない。GitHub Pages で公開中 … https://hiroakiishibashi.github.io/fractas/</td>
+</tr>
+<tr>
+<td>ランキング</td>
+<td>動いている（Supabase の <code>game_catalog</code> に登録済み・記録 65 件）</td>
+</tr>
+<tr>
+<td>言語</td>
+<td>英語のみ。ポータルの言語SDKを配線済み（2026-09-11）</td>
+</tr>
+<tr>
+<td>判断待ち</td>
+<td>どちらの版をポータルに出すか、ほか5件（<a href="#doc-decisions">DECISIONS.md</a>）</td>
+</tr>
+</tbody>
+</table></div>
+<p>いちばん大事なこと: <strong><code>main</code> は、ポータルで遊べるゲームとは別物です。</strong>
+公開中のゲームを直すときは <code>portal-radial</code> を直します。</p>
+<hr />
+<h2 id="doc-handoff-1-最初の10分でやること">1. 最初の10分でやること</h2>
+<ol>
+<li>このリポジトリを最新にする（<code>git pull</code>）。別の環境も push しているため。</li>
+<li><code>bash scripts/status.sh</code> を実行する。読むだけで、何も書き換えません。</li>
+<li>結果を「0. 30秒でわかる現状」と見比べる。違っていたら、誰かが更新しています。<code>git log --all --oneline | head -20</code> と、hiroakiishibashi-web の PR を確かめます。</li>
+<li>頼まれた作業を <a href="#doc-runbook">RUNBOOK.md</a> の表から探す。</li>
+<li>迷ったら、手を動かす前にオーナーに聞く。質問には「おすすめの答え」を添えると早い。</li>
+</ol>
+<hr />
+<h2 id="doc-handoff-2-fractas-とは">2. Fractas とは</h2>
+<ul>
+<li>ブラウザで遊ぶ、1ファイルの HTML5 ゲーム（<code>index.html</code> だけ。ビルドなし・外部ライブラリなし）。</li>
+<li>マウスでもタッチでも遊べる。音は Web Audio で作っている（音声ファイルなし）。</li>
+<li>オーナー（石橋 広在）が AI（Claude Code、ほかに Codex・Aider）と一緒に作ってきた。</li>
+<li>始まり: <code>/Volumes/PINK/Development/Fractas.html</code>（元の試作。ファイルの中の表記は「Fractus - Prototype v0.25」）。2026-06-05 に製品化して、ポータルに載せた。</li>
+<li>名前は <strong>Fractas</strong>。「Fractus」は古い表記なので使わない。</li>
+<li>ゲームの番号（game_id）は <strong><code>fractas</code></strong>。ランキングやURLはすべてこの名前。</li>
+</ul>
+<hr />
+<h2 id="doc-handoff-3-2つの版">3. 2つの版</h2>
+<h3 id="doc-handoff-3-1-ラジアル版ポータルで公開中">3-1. ラジアル版（ポータルで公開中）</h3>
+<p>円い盤面のマッチ3です。12本の扇形（セクター）と、中心から外へ広がる輪（リング）でできています。</p>
+<ul>
+<li><strong>動かし方</strong></li>
+<li>中心のまわりをドラッグ → その輪が回る</li>
+<li>中心へ／外へドラッグ → その扇形がずれる</li>
+<li>同じ色が3つ以上つながると「予約」されて光る</li>
+<li><strong>ターン</strong>: 盤面を動かす操作を <strong>3回</strong> すると、スキャナー（光の輪）が中心から外へ走って判定する。</li>
+<li>消せる組があれば → 消える → 点が入る → 補充される → 次の3手へ</li>
+<li>1組もなければ → <strong>GAME OVER</strong></li>
+<li>判定に1回成功するたびに、補充されるブロックの色が1つ増える（3色から始まり、最大6色）。</li>
+<li>残りのターン数を英語で読み上げる（例: "2 turns left"）。</li>
+<li>画面に出るのはスコアだけ。GAME OVER の画面をタップすると最初から。</li>
+</ul>
+<h3 id="doc-handoff-3-2-正方形版mainポータル未公開">3-2. 正方形版（<code>main</code>・ポータル未公開）</h3>
+<p>2026-07-27 に別の環境（旧 MacBook Pro ＋ Aider）で作り替えられた、<strong>別のゲーム</strong>です。</p>
+<ul>
+<li>正方形のブロックが中心（コア）から 1.5 秒ごとに生えて、外へ押し広がる。</li>
+<li>ブロックを辺にそってドラッグして動かす。かたまりは、いつもつながっていないといけない。</li>
+<li>同じ大きさの正方形が 2×2 に並ぶと消える。消えると中心のほうへ詰まる。</li>
+<li>どれかのブロックが外枠（中心から 8 マス）に届くと GAME OVER。</li>
+<li>ハイスコア・ミュート・プレイ回数を端末に保存する（<code>localStorage</code>）。</li>
+<li>ポータルと同じしくみでスコアを送る（<code>mode: 'square_cluster'</code>）。<strong>点の桁がラジアル版とまったく違う</strong>ので、同じランキングに混ぜると比べられない。</li>
+</ul>
+<h3 id="doc-handoff-3-3-2つを比べると">3-3. 2つを比べると</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>ラジアル版</th>
+<th>正方形版</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>正本</td>
+<td>ブランチ <code>portal-radial</code></td>
+<td>ブランチ <code>main</code></td>
+</tr>
+<tr>
+<td>行数（<code>index.html</code>）</td>
+<td>1,916</td>
+<td>1,284</td>
+</tr>
+<tr>
+<td>公開先</td>
+<td>ポータル</td>
+<td>GitHub Pages</td>
+</tr>
+<tr>
+<td>送るスコアの <code>mode</code></td>
+<td><code>turn3</code></td>
+<td><code>square_cluster</code></td>
+</tr>
+<tr>
+<td>1回消したときの点</td>
+<td>10×個数 ＋ 連鎖ボーナス</td>
+<td>400×大きさ×連鎖</td>
+</tr>
+<tr>
+<td>端末に保存するもの</td>
+<td>なし</td>
+<td>ハイスコア・ミュート・回数</td>
+</tr>
+<tr>
+<td>判定のタイミング</td>
+<td>3手ごと</td>
+<td>2×2 がそろった瞬間</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="doc-handoff-3-4-ラジアル版の未公開の改良main-の履歴に残っている">3-4. ラジアル版の未公開の改良（<code>main</code> の履歴に残っている）</h3>
+<p>正方形版に作り替える前に、ラジアル版へ2つの改良が入りました。<strong>ポータルには出ていません。</strong></p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>コミット</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ce073ce</code></td>
+<td>古い Mac 向けの軽量化（描画の解像度を最大1倍に、背景のぼかしをやめる、光の影をやめる）</td>
+</tr>
+<tr>
+<td><code>d282cb6</code></td>
+<td>ハイスコアの保存・ミュートボタン・GAME OVER 画面の強化（成績の表示・「PLAY AGAIN」ボタン）</td>
+</tr>
+</tbody>
+</table></div>
+<p>出すかどうかは判断待ちです（<a href="#doc-decisions">DECISIONS.md</a> の D2）。手順は <a href="#doc-runbook">RUNBOOK.md</a> の R3。</p>
+<hr />
+<h2 id="doc-handoff-4-どこに何があるか地図">4. どこに何があるか（地図）</h2>
+<h3 id="doc-handoff-4-1-github">4-1. GitHub</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>リポジトリ</th>
+<th>公開</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hiroakiishibashi/fractas</code></td>
+<td><strong>PUBLIC</strong></td>
+<td>このリポジトリ。<code>main</code>＝正方形版、<code>portal-radial</code>＝公開中のラジアル版、資料と道具</td>
+</tr>
+<tr>
+<td><code>hiroakiishibashi/hiroakiishibashi-web</code></td>
+<td>PUBLIC</td>
+<td>ポータル（hiroakiishibashi.com）全体。<code>games/fractas/</code> にゲームのコピーとページ</td>
+</tr>
+<tr>
+<td><code>hiroakiishibashi/dev-notes</code></td>
+<td>private</td>
+<td>開発メモ。<code>15_fractas.md</code> と <code>03_projects_overview.md</code> の Fractas の章</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="doc-handoff-4-2-このリポジトリの中main">4-2. このリポジトリの中（<code>main</code>）</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>パス</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>index.html</code></td>
+<td>ゲーム本体（<code>main</code> では正方形版）</td>
+</tr>
+<tr>
+<td><code>hi-game-lang.js</code></td>
+<td>ポータルの言語SDKの丸写し。<strong>書き換えない</strong></td>
+</tr>
+<tr>
+<td><code>assets/</code></td>
+<td>2026-06 に撮ったサムネ（1280×720）とプレイ動画（mp4/webm・約15秒・当時のエンドレス版）、2026-09-15 に撮った<strong>公開中のラジアル版</strong>の動画 <code>fractas-radial-preview-2026-09.mp4</code>（約22秒）</td>
+</tr>
+<tr>
+<td><code>CLAUDE.md</code></td>
+<td>Claude Code が自動で読む約束</td>
+</tr>
+<tr>
+<td><code>docs/</code></td>
+<td>この引き継ぎ資料一式（<code>codemap/</code> は機械生成の索引）</td>
+</tr>
+<tr>
+<td><code>scripts/status.sh</code></td>
+<td>現状の確認（読むだけ）</td>
+</tr>
+<tr>
+<td><code>scripts/sync-to-portal.sh</code></td>
+<td>ポータルのクローンへ写す（安全装置つき・コミットはしない）</td>
+</tr>
+<tr>
+<td><code>scripts/gen-codemap.py</code></td>
+<td>コードの索引を作り直す</td>
+</tr>
+<tr>
+<td><code>scripts/build-handoff-html.py</code></td>
+<td><code>docs/*.md</code> から1枚の HTML（<code>docs/handoff.html</code>）を作る</td>
+</tr>
+<tr>
+<td><code>GAME_DEVELOPMENT_HANDOVER.md</code></td>
+<td>別の環境（旧Mac＋Aider）が書いたメモ。<strong>一部古い</strong>（ゲームの説明がラジアル版のまま・パスが別の Mac のもの）。消さずに残す（その環境の記録）が、書かれているパスと説明は使わない</td>
+</tr>
+<tr>
+<td><code>README.md</code></td>
+<td>概要（英語）。本文はラジアル版の説明として正しい。<strong>手順は RUNBOOK を使う</strong></td>
+</tr>
+</tbody>
+</table></div>
+<p>ブランチ <code>portal-radial</code> にあるのは、公開中の <code>index.html</code>・<code>hi-game-lang.js</code>・短い <code>CLAUDE.md</code> と、2026-07-26 時点の <code>README.md</code>・<code>assets/</code>・<code>.gitignore</code> です。<strong>資料（<code>docs/</code>）と道具（<code>scripts/</code>）は <code>main</code> にしかありません。</strong>
+PINK では <code>portal-radial</code> を <strong><code>/Volumes/PINK/Development/Fractas-portal-radial/</code></strong>（git の worktree）で開いているので、<code>main</code> のフォルダで切り替える必要はありません（切り替えると <code>docs/</code> と <code>scripts/</code> が消えたように見える＝<a href="#doc-pitfalls">PITFALLS.md</a> の P19）。</p>
+<h3 id="doc-handoff-4-3-ポータルhiroakiishibashi-webの中の-fractas">4-3. ポータル（hiroakiishibashi-web）の中の Fractas</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>パス</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>games/fractas/index.html</code></td>
+<td>Fractas のページ（枠・説明・TOP5・全ランキング・評価とコメント・言語の案内）</td>
+</tr>
+<tr>
+<td><code>games/fractas/game/index.html</code></td>
+<td><strong>公開中のゲーム</strong>（<code>portal-radial</code> と同じ）</td>
+</tr>
+<tr>
+<td><code>games/fractas/game/hi-game-lang.js</code></td>
+<td>言語SDKの同梱コピー</td>
+</tr>
+<tr>
+<td><code>games/fractas/CLAUDE.md</code></td>
+<td>このフォルダで作業するときの約束（自動で読まれる）</td>
+</tr>
+<tr>
+<td><code>docs/handoff/fractas/</code></td>
+<td>この引き継ぎ資料の公開版</td>
+</tr>
+<tr>
+<td><code>js/user-ui.js</code></td>
+<td>ゲーム一覧 <code>GAMES</code> の <code>fractas</code>（50行目付近）と表示名（465行目付近）</td>
+</tr>
+<tr>
+<td><code>index.html</code></td>
+<td>トップページのカード（110行目付近）</td>
+</tr>
+<tr>
+<td><code>leaderboard/index.html</code></td>
+<td>ランキングのタブ（30行目付近）</td>
+</tr>
+<tr>
+<td><code>js/i18n/{en,ja,ko,es,pt,zh}.js</code></td>
+<td>説明文 <code>game.fractas.desc</code> / <code>game.fractas.how</code>（6言語すべてある）</td>
+</tr>
+<tr>
+<td><code>js/continue.js</code></td>
+<td>「続きから」の対象一覧 <code>KNOWN</code></td>
+</tr>
+<tr>
+<td><code>assets/games/keyvisuals/variants/fractas-hero-b.jpg</code></td>
+<td>キービジュアル（トップ・About・その他のゲームに出る）</td>
+</tr>
+<tr>
+<td><code>assets/games/fractas.jpg</code>・<code>fractas-preview.{mp4,webm}</code></td>
+<td>2026-06 の旧サムネと動画</td>
+</tr>
+<tr>
+<td>Supabase の <code>game_catalog</code></td>
+<td><code>fractas</code>（enabled=true）。ランキングに投稿してよいゲームの一覧</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="doc-handoff-4-4-pink外付けドライブ">4-4. PINK（外付けドライブ）</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>パス</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/Volumes/PINK/Development/Fractas/</code></td>
+<td>このリポジトリのクローン（<code>main</code>）。<code>.tmp-chrome-ui-check/</code>（43MB の Chrome の一時データ）と <code>outputs/</code> は無視する設定のゴミ</td>
+</tr>
+<tr>
+<td><code>/Volumes/PINK/Development/Fractas-portal-radial/</code></td>
+<td><strong>公開中の版を直すフォルダ</strong>（ブランチ <code>portal-radial</code> の worktree。2026-09-15 作成）</td>
+</tr>
+<tr>
+<td><code>/Volumes/PINK/Development/Fractas.html</code></td>
+<td>最初の試作（参考）</td>
+</tr>
+<tr>
+<td><code>/Volumes/PINK/Development/hiroakiishibashi-web/</code></td>
+<td>ポータルのクローン。⚠️ 2026-09-11 の時点で<strong>不整合</strong>（HEAD は 9/02 のまま、中のファイルだけ新しい）。ここでは作業しない → 新しくクローンする（<a href="#doc-pitfalls">PITFALLS.md</a> の P8）</td>
+</tr>
+<tr>
+<td><code>/Volumes/PINK/Development/_handover/2026-09-15/fractas/</code></td>
+<td>この資料の写し（HTML・状態の JSON つき）</td>
+</tr>
+<tr>
+<td><code>/Volumes/PINK/Development/tools/gamerec/</code></td>
+<td>全ゲーム共用のプレイ動画の撮影道具</td>
+</tr>
+<tr>
+<td><code>/Volumes/PINK/Development/.claude/launch.json</code></td>
+<td>設定 <code>fractas</code>（ポート3459）＝このフォルダを手元で配信</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="doc-handoff-4-5-url">4-5. URL</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>URL</th>
+<th>中身</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>https://hiroakiishibashi.com/games/fractas/</td>
+<td>公開中のページ</td>
+</tr>
+<tr>
+<td>https://hiroakiishibashi.com/games/fractas/game/</td>
+<td>ゲーム本体（iframe の中身）</td>
+</tr>
+<tr>
+<td>https://hiroakiishibashi.com/leaderboard/</td>
+<td>ランキング（Fractas のタブ）</td>
+</tr>
+<tr>
+<td>https://hiroakiishibashi.github.io/fractas/</td>
+<td>GitHub Pages（<code>main</code>＝正方形版）</td>
+</tr>
+<tr>
+<td>https://github.com/hiroakiishibashi/fractas</td>
+<td>このリポジトリ</td>
+</tr>
+<tr>
+<td>https://hiroakiishibashi.com/docs/handoff/fractas/</td>
+<td>この資料の公開版</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="doc-handoff-5-公開中の版ラジアルがポータルで動くしくみ">5. 公開中の版（ラジアル）がポータルで動くしくみ</h2>
+<pre><code>ブラウザ
+ └ hiroakiishibashi.com/games/fractas/        … ページ（games/fractas/index.html）
+    ├ ランキング・評価とコメント・言語の案内（ポータルの js/*.js）
+    └ &lt;iframe&gt; /games/fractas/game/            … ゲーム（games/fractas/game/index.html）
+         ├ hi-game-lang.js で表示の言語を決める（いまは常に英語）
+         └ スコアを postMessage で親へ送る ─→ 親は、ログイン中なら Supabase に保存
+</code></pre>
+<h3 id="doc-handoff-5-1-スコアが保存されるまで">5-1. スコアが保存されるまで</h3>
+<p><strong>1.</strong> ゲームの <code>reportScore()</code> が、親に <code>postMessage({type:'SCORE_UPDATE', game:'fractas', score, metadata})</code> を送る。
+- 遊んでいる間は <strong>10秒に1回まで</strong>。同じ点は2回送らない。
+- GAME OVER のときと、タブを離れたとき（<code>visibilitychange</code>・<code>pagehide</code>・<code>blur</code>）は必ず送る。
+- <code>metadata</code> は <code>{ theme, mode:'turn3', turnsPerCheck:3, turns, checks, colorCount }</code>。
+2. 親（<code>games/fractas/index.html</code>）が受け取る。<strong>送り主が自分の iframe で、同じオリジンのときだけ</strong>受け付ける（にせのスコアを弾く）。
+<strong>3.</strong> ログインしていれば、<code>js/scores.js</code> の <code>saveScore('fractas', …)</code> が
+- <code>plays</code> テーブルに1行を足す（これが本体）
+- <code>scores</code> テーブルを上書きする（補助。失敗してもよい）
+4. ランキングは <code>plays</code> から「1人1件のベスト」を集めて出す。</p>
+<p>ログインしていない人のスコアは保存されません（ゲームはそのまま遊べます）。</p>
+<h3 id="doc-handoff-5-2-ポータルの外で開いたとき">5-2. ポータルの外で開いたとき</h3>
+<p>ゲームを直接開くと（iframe の中ではないとき）、ゲームは公式SDK（<code>https://hiroakiishibashi.com/sdk/html/hiroakiishibashi-sdk.js</code>）を読み込んで、直接保存しようとします。
+ただし SDK は <code>scores</code> テーブルに書くので、<strong>ポータルのランキング（<code>plays</code> を見る）には出ません</strong>。SDK は、ランキングを <code>scores</code> で持っていたころの設計のままで、ポータルはのちに <code>plays</code>（全部のプレイの記録）を正にしました。バグではなく、古い設計の名残です（<a href="#doc-pitfalls">PITFALLS.md</a> の P11）。</p>
+<h3 id="doc-handoff-5-3-表示の言語">5-3. 表示の言語</h3>
+<ul>
+<li><code>&lt;head&gt;</code> の最初で <code>hi-game-lang.js</code> を読み、<code>var LANG = (window.HiLang &amp;&amp; HiLang.init({ id:'fractas', langs:['en'] })) || 'en';</code> で決める。</li>
+<li>Fractas は英語しか持っていないので、いつも <code>en</code>。</li>
+<li>ポータルで日本語などを選んでいる人には、ゲームの枠の下に「このゲームは English でご利用いただけます。」と出る（ポータル側の <code>js/game-lang-bridge.js</code> が出す）。</li>
+<li>決まりの正本: https://hiroakiishibashi.com/docs/game-language-spec.md</li>
+<li>検査: ポータルのクローンで <code>node tools/test-game-lang.mjs</code>（同梱コピーが SDK と1バイトも違わないかも見る）</li>
+</ul>
+<h3 id="doc-handoff-5-4-ページがほかに持っている機能ポータル側ゲームは関係なし">5-4. ページがほかに持っている機能（ポータル側。ゲームは関係なし）</h3>
+<p>TOP5・全ランキング（上位／最近）・評価とコメント（<code>js/game-social.js</code>）・共有ボタン・全画面ボタン・「その他のゲーム」。
+スクリーンショット（📷）は、ゲーム側が対応していません（仕様: <code>docs/game-screenshot-spec.md</code>・DECISIONS の D6）。</p>
+<hr />
+<h2 id="doc-handoff-6-正方形版mainの状態">6. 正方形版（<code>main</code>）の状態</h2>
+<ul>
+<li>動く。GitHub Pages（<code>main</code> のルートをそのまま配信）で公開されている。</li>
+<li>ポータルと同じ配線（スコア送信・言語SDK）が入っているので、写せばポータルでも動く作りにはなっている。</li>
+<li>ただし、ポータルに出すには決めることがある（ランキングをどうするか・説明文・キービジュアル）。<a href="#doc-decisions">DECISIONS.md</a> の D1。</li>
+<li>注意: 2×2 の判定は <strong>大きさと位置だけを見ていて、色を見ていない</strong>（<code>checkMatches()</code>）。意図かどうかは分からない（D6）。</li>
+</ul>
+<hr />
+<h2 id="doc-handoff-7-破ってはいけない約束理由つき">7. 破ってはいけない約束（理由つき）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>約束</th>
+<th>理由（実際に起きたこと）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>オーナーの了承なしに <code>main</code> をポータルへ写さない</td>
+<td><code>main</code> は別のゲーム。古い同期コマンドをそのまま打つと、公開中のゲームとランキングが入れ替わる</td>
+</tr>
+<tr>
+<td>2</td>
+<td>公開中の版を直すときは <code>portal-radial</code> で直す</td>
+<td><code>main</code> には正方形版しかない</td>
+</tr>
+<tr>
+<td>3</td>
+<td><code>hi-game-lang.js</code> を書き換えない</td>
+<td>ポータルの SDK の丸写し。ずれると検査が落ちる</td>
+</tr>
+<tr>
+<td>4</td>
+<td>ゲームから <code>preferred_lang</code> を書かない</td>
+<td>サイト全体の設定。書くと他のゲームまで変わる（Lumina で実際に起きた）</td>
+</tr>
+<tr>
+<td>5</td>
+<td><code>npx wrangler deploy</code> を叩かない</td>
+<td>差分でなく丸ごと置き換える。古いツリーから出すと他の人の変更が消える（2026-08-19〜20 に何度も起きた）</td>
+</tr>
+<tr>
+<td>6</td>
+<td><code>git add -A</code> / <code>git add .</code> を使わない</td>
+<td>同じツリーで他のスレッドも作業している。関係ないファイルまで入る</td>
+</tr>
+<tr>
+<td>7</td>
+<td>作りかけをポータルの <code>main</code> に入れない</td>
+<td>マージした瞬間に本番に出る</td>
+</tr>
+<tr>
+<td>8</td>
+<td>古い PR の版でゲームを上書きしない</td>
+<td>2026-08-20、PR #3 の版を入れると演出の速さが4か所とも昔に戻るところだった</td>
+</tr>
+<tr>
+<td>9</td>
+<td>秘密の値・個人のメールアドレスを書かない（例: API キー・トークン・パスワード・<code>.dev.vars</code> の中身・個人の Gmail）</td>
+<td>両方のリポジトリが公開。この資料も本番の URL で誰でも読める。公開用の Supabase の anon キーはページに載っているもので秘密ではないが、資料には貼らない</td>
+</tr>
+<tr>
+<td>10</td>
+<td>マネタイズ系のゲームサイト（Playgama・CrazyGames・itch.io など）への導線をサイトに置かない</td>
+<td>オーナーの方針（2026-09-03）。Roblox だけは例外</td>
+</tr>
+<tr>
+<td>11</td>
+<td>「直ったはず」で終わらせない</td>
+<td>本番を <code>?cb=毎回ちがう数字</code> で確かめる。同じ数字だと古いキャッシュが返る</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="doc-handoff-8-よくある作業">8. よくある作業</h2>
+<p>手順はすべて <a href="#doc-runbook">RUNBOOK.md</a> にあります（コピペで動くように書いています）。</p>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>やりたいこと</th>
+<th>手順</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>いまの状態を知る</td>
+<td>R1</td>
+</tr>
+<tr>
+<td>公開中のゲームを直して出す</td>
+<td>R2</td>
+</tr>
+<tr>
+<td>未公開のラジアル改良（ハイスコアなど）を入れる</td>
+<td>R3（D2 の了承が要る）</td>
+</tr>
+<tr>
+<td>言語SDKが新しくなった</td>
+<td>R4</td>
+</tr>
+<tr>
+<td>日本語などの翻訳を足す</td>
+<td>R5</td>
+</tr>
+<tr>
+<td>正方形版をポータルに出す</td>
+<td>R6（D1 の了承が要る）</td>
+</tr>
+<tr>
+<td>GitHub Pages（正方形版）を直す</td>
+<td>R7</td>
+</tr>
+<tr>
+<td>本番を前の版に戻す</td>
+<td>R8</td>
+</tr>
+<tr>
+<td>サムネ・プレイ動画を撮り直す</td>
+<td>R9</td>
+</tr>
+<tr>
+<td>直したのに本番が変わらない</td>
+<td>R10</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="doc-handoff-9-確かめ方">9. 確かめ方</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>何を</th>
+<th>どうやって</th>
+<th>期待する結果</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>全体の状態</td>
+<td><code>bash scripts/status.sh</code></td>
+<td>公開中＝ラジアル版、<code>portal-radial</code> と完全一致、SDK と一致</td>
+</tr>
+<tr>
+<td>言語の配線</td>
+<td>ポータルのクローンで <code>node tools/test-game-lang.mjs</code></td>
+<td>「✅ 全部 pass」</td>
+</tr>
+<tr>
+<td>公開中のゲームの中身</td>
+<td><code>curl -sSL "https://hiroakiishibashi.com/games/fractas/game/?cb=$RANDOM$RANDOM" \| grep -c TURNS_PER_CHECK</code></td>
+<td>1以上ならラジアル版</td>
+</tr>
+<tr>
+<td>配信が本当に走ったか</td>
+<td><code>gh run list -R hiroakiishibashi/hiroakiishibashi-web --workflow=deploy.yml --limit 3</code> → <code>gh run view &lt;番号&gt; -R hiroakiishibashi/hiroakiishibashi-web</code></td>
+<td>「配信」「本番の応答を確認」が success（skipped なら配信されていない）</td>
+</tr>
+<tr>
+<td>言語の案内</td>
+<td>ブラウザでポータルを日本語にして /games/fractas/ を開く</td>
+<td>枠の下に「このゲームは English でご利用いただけます。」</td>
+</tr>
+<tr>
+<td>ランキング</td>
+<td>ログインして遊び、GAME OVER まで行く</td>
+<td>TOP5 と「Your Score」が更新される</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="doc-handoff-10-オーナーの判断待ち">10. オーナーの判断待ち</h2>
+<p><a href="#doc-decisions">DECISIONS.md</a> に、選択肢と、それぞれを選んだときの手順・影響をまとめています。短く言うと:</p>
+<ul>
+<li><strong>D1</strong> ポータルに出すのは、ラジアル版のままか、正方形版か</li>
+<li><strong>D2</strong> ラジアル版の未公開の改良（<code>ce073ce</code>・<code>d282cb6</code>）を出すか</li>
+<li><strong>D3</strong> このリポジトリを公開（PUBLIC）のままにするか</li>
+<li><strong>D4</strong> ランキングに昔の版の高得点が残っている件をどうするか</li>
+<li><strong>D5</strong> GitHub Pages で正方形版を公開し続けるか</li>
+<li><strong>D6</strong> 急がない改善（翻訳・スクショ対応・撮影の台本・正方形版の色）</li>
+</ul>
+<hr />
+<h2 id="doc-handoff-11-このスレッドだけが知っていたこと">11. このスレッドだけが知っていたこと</h2>
+<p>記録（git・メモリ）に残りにくい話を書き残します。</p>
+<ul>
+<li><strong>README の古い「同期コマンド」は危ない。</strong> 2026-09-11 に README へ警告を足しましたが、古い写し（dev-notes の 03 など）には警告なしの版が残っていました（2026-09-15 に直した）。見かけても使わず、<code>scripts/sync-to-portal.sh</code> を使います。</li>
+<li><strong>2つの版が分かれたいきさつ。</strong> 2026-07-26 にこのリポジトリを private で作りました（最初のコミット <code>6a1e28a</code> はポータルと同じラジアル版）。同じ日の夜から翌未明に、別の環境（旧 MacBook Pro ＋ Aider）が改良を2つ push し、リポジトリを PUBLIC にして GitHub Pages を有効にし、正方形版に作り替えました。ポータルにはどれも出ていません。</li>
+<li><strong>公開中のゲームは <code>6a1e28a</code> ＋ 言語SDKの配線5行。</strong> 2026-09-11 に Web スレッドから「正本とポータルが約2,300行食い違う」と言われて調べた結果です。どちらかが新しいのではなく、別のゲームでした。</li>
+<li><strong>ランキング1位（631,360点・2026-06-05）は最初期の版の点。</strong> 当時は自動スキャナーが勝手に消していくエンドレス版で、何もしなくても点が入りました（60秒版では、放置で約1,270万点）。いまのターン制とは比べられません（D4）。</li>
+<li><strong>2026-06 のサムネと動画の撮り方。</strong> canvas の <code>toBlob</code> でサムネを、<code>canvas.captureStream()</code>＋<code>MediaRecorder</code> で動画を撮り、使い捨ての node サーバに送って保存し、ffmpeg で mp4 にしました（RUNBOOK の R9）。2026-09-15 に、全ゲーム共用の撮影道具 <code>tools/gamerec/</code> に Fractas の台本（<code>games/fractas.mjs</code>）を作ったので、いまは <code>node record.mjs fractas</code> の1行で撮れます。</li>
+<li><strong>ヘッドレスのブラウザでは、iframe の中の <code>requestAnimationFrame</code> が止まることがある。</strong> そのせいでタイマーが進まず、「壊れている」と誤診しかけました。ゲームを直接開いて確かめるか、<code>update()</code> を1回呼んで確かめます。</li>
+<li><strong><code>npx serve</code> は <code>/game/index.html</code> を <code>/game</code> に書き換える。</strong> 相対パスの <code>hi-game-lang.js</code> が 404 になります。ページごと手元で確かめるときは <code>python3 -m http.server</code> を使いました。</li>
+<li><strong>GitHub の GraphQL の回数制限にかかることがある</strong>（2026-09-15 に発生）。<code>gh pr create</code> が失敗したら、REST（<code>gh api</code>）で代わりができます（RUNBOOK の R10-3）。</li>
+<li><strong>オーナーへの説明は、やさしい日本語・短い文で。</strong> スマホ（iPhone・iPad）から読むことが多い。「推奨で」「進めてください」は「おすすめどおりに進めてよい」という意味。</li>
+</ul>
+<hr />
+<h2 id="doc-handoff-12-用語集">12. 用語集</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>ことば</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ポータル</td>
+<td>hiroakiishibashi.com。オーナーのゲームサイト</td>
+</tr>
+<tr>
+<td>正本</td>
+<td>いちばん正しい元のファイル。写しと食い違ったら正本に合わせる</td>
+</tr>
+<tr>
+<td>リング（輪）</td>
+<td>ラジアル版の、中心から同心円に並ぶ段</td>
+</tr>
+<tr>
+<td>セクター（扇形）</td>
+<td>ラジアル版の、12本に分かれた放射状の列</td>
+</tr>
+<tr>
+<td>スキャナー</td>
+<td>判定のときに中心から外へ走る光の輪</td>
+</tr>
+<tr>
+<td>予約</td>
+<td>3つ以上そろっていて、次の判定で消える予定のブロック（光る）</td>
+</tr>
+<tr>
+<td>判定</td>
+<td>3手ごとにスキャナーが走り、消せる組を消すこと。1組もなければ GAME OVER</td>
+</tr>
+<tr>
+<td>ラッパー</td>
+<td>ゲームを iframe で囲む、ポータル側のページ（<code>games/fractas/index.html</code>）</td>
+</tr>
+<tr>
+<td><code>SCORE_UPDATE</code></td>
+<td>ゲームが親にスコアを知らせるメッセージの名前</td>
+</tr>
+<tr>
+<td><code>plays</code> / <code>scores</code></td>
+<td>Supabase のテーブル。ランキングは <code>plays</code> を見る</td>
+</tr>
+<tr>
+<td><code>game_catalog</code></td>
+<td>ランキングに投稿してよいゲームの一覧（Supabase）</td>
+</tr>
+<tr>
+<td>言語SDK</td>
+<td><code>hi-game-lang.js</code>。ポータルの言語設定をゲームに伝える小さなファイル</td>
+</tr>
+<tr>
+<td>マージ＝公開</td>
+<td>ポータルの <code>main</code> にマージすると、GitHub Actions が本番へ配信する</td>
+</tr>
+<tr>
+<td><code>?cb=</code></td>
+<td>キャッシュをよけるために、URL の最後に付ける毎回ちがう数字</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="doc-handoff-13-資料の置き場所どれも同じ内容">13. 資料の置き場所（どれも同じ内容）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>置き場所</th>
+<th>形</th>
+<th>使いどころ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hiroakiishibashi/fractas</code> の <code>docs/</code>（<code>main</code>）</td>
+<td>.md ＋ <code>handoff.html</code></td>
+<td><strong>正本</strong></td>
+</tr>
+<tr>
+<td>https://hiroakiishibashi.com/docs/handoff/fractas/</td>
+<td>HTML ＋ .md</td>
+<td>スマホ・クローンできない環境から</td>
+</tr>
+<tr>
+<td><code>/Volumes/PINK/Development/_handover/2026-09-15/fractas/</code></td>
+<td>.md ＋ HTML ＋ 状態の JSON</td>
+<td>PINK だけで読める写し</td>
+</tr>
+<tr>
+<td>dev-notes の <code>15_fractas.md</code></td>
+<td>.md（要約）</td>
+<td>開発メモの目次から</td>
+</tr>
+<tr>
+<td>Claude のメモリ <code>project_fractas.md</code></td>
+<td>.md（要約）</td>
+<td>Claude Code が自動で読む</td>
+</tr>
+<tr>
+<td>claude.ai のアーティファクト</td>
+<td>HTML</td>
+<td>どの端末からでも</td>
+</tr>
+</tbody>
+</table></div>
+<p>食い違ったら、<strong>正本（このリポジトリ）と実物（git・本番）</strong> を正とします。</p></section><section class="doc" id="doc-runbook"><p class="eyebrow">docs/RUNBOOK.md</p><h1 id="doc-runbook-fractas-手順書runbook">Fractas 手順書（RUNBOOK）</h1>
+<blockquote>
+<p>コピペで動くように書いています。<code>&lt;...&gt;</code> のところだけ自分の値に置き換えます。
+公開する前に、必ず <a href="#doc-handoff">HANDOFF.md</a> の「7. 破ってはいけない約束」を読んでください。
+最終更新: 2026-09-15</p>
+</blockquote>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>番号</th>
+<th>やること</th>
+<th>オーナーの了承</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>R0</td>
+<td>準備（リポジトリを用意する）</td>
+<td>いらない</td>
+</tr>
+<tr>
+<td>R1</td>
+<td>いまの状態を確かめる</td>
+<td>いらない</td>
+</tr>
+<tr>
+<td>R2</td>
+<td>公開中のゲーム（ラジアル版）を直して出す</td>
+<td>中身しだい</td>
+</tr>
+<tr>
+<td>R3</td>
+<td>未公開のラジアル改良を入れる</td>
+<td><strong>要る（D2）</strong></td>
+</tr>
+<tr>
+<td>R4</td>
+<td>言語SDKが新しくなったとき</td>
+<td>いらない</td>
+</tr>
+<tr>
+<td>R5</td>
+<td>翻訳（日本語など）を足す</td>
+<td>中身しだい</td>
+</tr>
+<tr>
+<td>R6</td>
+<td>正方形版をポータルに出す</td>
+<td><strong>要る（D1・D4）</strong></td>
+</tr>
+<tr>
+<td>R7</td>
+<td>GitHub Pages（正方形版）を直す</td>
+<td>いらない</td>
+</tr>
+<tr>
+<td>R8</td>
+<td>本番を前の版に戻す</td>
+<td>いらない（急ぐとき）</td>
+</tr>
+<tr>
+<td>R9</td>
+<td>サムネ・プレイ動画を撮り直す</td>
+<td>いらない</td>
+</tr>
+<tr>
+<td>R10</td>
+<td>困ったとき</td>
+<td>いらない</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="doc-runbook-r0-準備">R0. 準備</h2>
+<h3 id="doc-runbook-r0-1-fractas-リポジトリ資料と道具いつも-main">R0-1. fractas リポジトリ（資料と道具・いつも <code>main</code>）</h3>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/Fractas
+git switch main                            # このフォルダは、いつも main のまま使う
+git pull                                   # 別の環境（旧Mac＋Aider）も push するので必ず
+git fetch origin --tags
+</code></pre>
+<p><code>fatal: unable to access '.git/config': Operation not permitted</code> と出たら、PINK の一時的な不具合です（<a href="#doc-pitfalls">PITFALLS.md</a> の P7）。時間をおいてやり直すか、別の場所にクローンします:</p>
+<pre><code class="language-bash">mkdir -p /Volumes/PINK/Development/_work
+git clone git@github.com:hiroakiishibashi/fractas.git /Volumes/PINK/Development/_work/fractas
+</code></pre>
+<h3 id="doc-runbook-r0-2-ポータルhiroakiishibashi-webのクローン">R0-2. ポータル（hiroakiishibashi-web）のクローン</h3>
+<p>⚠️ <strong><code>/Volumes/PINK/Development/hiroakiishibashi-web</code> は使いません</strong>（中身が不整合・<a href="#doc-pitfalls">PITFALLS.md</a> の P8）。そのつど、新しくクローンします:</p>
+<pre><code class="language-bash">mkdir -p /Volumes/PINK/Development/_work
+W=/Volumes/PINK/Development/_work/hiw-$(date +%Y%m%d-%H%M)
+git clone --depth 60 git@github.com:hiroakiishibashi/hiroakiishibashi-web.git &quot;$W&quot;
+echo &quot;$W&quot;
+</code></pre>
+<p><strong>このあとの手順の <code>&lt;W&gt;</code> は、いま表示されたパスに置き換えます</strong>（同じターミナルなら <code>"$W"</code> と書いてもよい。変数が残っている）。
+終わったら消してかまいません（<code>rm -rf "$W"</code>。自分で作ったものだけ）。</p>
+<h3 id="doc-runbook-r0-3-公開中の版を直すための専用フォルダportal-radial">R0-3. 公開中の版を直すための専用フォルダ（<code>portal-radial</code>）</h3>
+<p><code>/Volumes/PINK/Development/Fractas-portal-radial/</code> は、ブランチ <code>portal-radial</code> を開いた<strong>別のフォルダ</strong>です（git の worktree。2026-09-15 に作成済み）。
+<strong>公開中のゲームは、このフォルダで直します。</strong> 資料と道具は <code>/Volumes/PINK/Development/Fractas/</code>（<code>main</code>）に残ったままなので、行き来しても消えません。</p>
+<pre><code class="language-bash">git -C /Volumes/PINK/Development/Fractas-portal-radial pull      # 使う前に最新にする
+</code></pre>
+<p>フォルダが無いとき（別の Mac など）は作ります（1行目で作れなければ2行目）:</p>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/Fractas &amp;&amp; git fetch origin
+git worktree add /Volumes/PINK/Development/Fractas-portal-radial portal-radial \
+  || git worktree add --track -b portal-radial /Volumes/PINK/Development/Fractas-portal-radial origin/portal-radial
+</code></pre>
+<p>⚠️ 同じブランチは1か所でしか開けません。<code>/Volumes/PINK/Development/Fractas</code> で <code>git switch portal-radial</code> をしないこと（<code>already used by worktree</code> と出て止まる。別の方法で切り替えると、<code>docs/</code> と <code>scripts/</code> が消えたように見える＝<a href="#doc-pitfalls">PITFALLS.md</a> の P19）。</p>
+<hr />
+<h2 id="doc-runbook-r1-いまの状態を確かめる読むだけ">R1. いまの状態を確かめる（読むだけ）</h2>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/Fractas &amp;&amp; git pull &amp;&amp; bash scripts/status.sh
+</code></pre>
+<p>ふつうの結果（2026-09-15 時点）:</p>
+<pre><code>== 1. リポジトリ hiroakiishibashi/fractas ==
+  ・ origin/main = … 正方形版
+  ・ origin/portal-radial = … ラジアル版(ターン制)
+== 2. 本番ポータル ==
+  ・ 公開中のゲーム: ラジアル版(ターン制)
+  ✅ 言語SDKの配線あり
+  ✅ 公開中 = portal-radial（完全一致）
+== 3. SDK の同梱コピー ==
+  ✅ …（3行とも ✅）
+== 4. GitHub Pages（main をそのまま配信） ==
+  ・ Pages: 正方形版
+  ✅ Pages = origin/main
+</code></pre>
+<p>⚠️ が出たら、その行の説明どおりに調べます。<strong>直す前に、何が起きているかをオーナーに報告</strong>します。</p>
+<hr />
+<h2 id="doc-runbook-r2-公開中のゲームラジアル版を直して出す">R2. 公開中のゲーム（ラジアル版）を直して出す</h2>
+<p><strong>1.</strong> 専用フォルダ（R0-3）を最新にする</p>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/Fractas-portal-radial
+git pull
+</code></pre>
+<ol start="2">
+<li>このフォルダの <code>index.html</code> を直す。どこに何があるかは、main のフォルダの資料 <code>/Volumes/PINK/Development/Fractas/docs/CODEMAP.md</code> と <code>docs/codemap/portal-radial.md</code>。</li>
+</ol>
+<p><strong>3.</strong> 手元で遊んで確かめる</p>
+<pre><code class="language-bash">npx serve -l 3460 --no-clipboard .
+# ブラウザで http://localhost:3460/ を開く（ポータルの枠なし・単体で動く）
+</code></pre>
+<p>確かめること: 3手で判定が走る／消えると点が入る／GAME OVER からタップで再開できる／開発者ツールのコンソールに赤いエラーが無い。
+終わったらサーバーを止める（Ctrl+C）。</p>
+<p><strong>4.</strong> <code>portal-radial</code> に記録して push する（このフォルダで）</p>
+<pre><code class="language-bash">git add index.html                        # 名指し。git add -A は使わない
+git commit -m &quot;&lt;何を直したか&gt;&quot;
+git push origin portal-radial
+</code></pre>
+<p><strong>5.</strong> main のフォルダから、ポータルのクローン（R0-2 の <code>&lt;W&gt;</code>）へ写す</p>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/Fractas &amp;&amp; git fetch origin
+bash scripts/sync-to-portal.sh &lt;W&gt; --dry-run    # 何が変わるかだけ見る
+bash scripts/sync-to-portal.sh &lt;W&gt;              # 写す。写したあと中で node tools/test-game-lang.mjs も1回走る
+</code></pre>
+<p><strong>6.</strong> ポータルで公開する（ブランチ → PR → マージ）</p>
+<pre><code class="language-bash">cd &lt;W&gt;
+git switch -c claude/fractas-&lt;何をしたか&gt;
+git add games/fractas/game/index.html games/fractas/game/hi-game-lang.js
+git commit -m &quot;Fractas: &lt;何を直したか&gt;&quot;
+git fetch origin &amp;&amp; git merge origin/main
+node tools/test-game-lang.mjs | tail -2         # 他の人の変更を取り込んだあとに、もう一度。「✅ 全部 pass」
+git push -u origin HEAD
+gh pr create --fill &amp;&amp; gh pr merge --merge      # マージ＝公開
+</code></pre>
+<p><code>gh pr create</code> が <code>API rate limit</code> で失敗したら R10-3。</p>
+<p><strong>7.</strong> 配信と本番を確かめる</p>
+<pre><code class="language-bash">gh run list -R hiroakiishibashi/hiroakiishibashi-web --workflow=deploy.yml --limit 3
+gh run watch &lt;いちばん上の番号&gt; -R hiroakiishibashi/hiroakiishibashi-web --exit-status
+cd /Volumes/PINK/Development/Fractas &amp;&amp; bash scripts/status.sh
+</code></pre>
+<p>status.sh で「✅ 公開中 = portal-radial（完全一致）」になれば完了。</p>
+<p><strong>8.</strong> 公開中のしるし（タグ）を付ける。タグの名前は <code>portal-live-&lt;公開した日&gt;</code>（例: 2026-09-11 に出したものは <code>portal-live-2026-09-11</code>）</p>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/Fractas &amp;&amp; git fetch origin
+T=portal-live-$(date +%Y-%m-%d)
+git tag &quot;$T&quot; origin/portal-radial &amp;&amp; git push origin &quot;$T&quot;
+</code></pre>
+<p><strong>9.</strong> 資料を直す（main のフォルダで）: <a href="#doc-handoff">HANDOFF.md</a> の「0. 30秒でわかる現状」（タグ名）と <a href="#doc-history">HISTORY.md</a> に1行。そのあと:</p>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/Fractas
+python3 scripts/gen-codemap.py origin/portal-radial &gt; docs/codemap/portal-radial.md
+python3 scripts/build-handoff-html.py
+git add docs/HANDOFF.md docs/HISTORY.md docs/codemap/portal-radial.md docs/handoff.html
+git commit -m &quot;docs: &lt;何をしたか&gt;&quot; &amp;&amp; git push
+</code></pre>
+<p><code>origin/portal-radial</code> は git の「ブランチの名前」です（フォルダの名前ではない）。<code>git fetch origin</code> のあとに使います。</p>
+<hr />
+<h2 id="doc-runbook-r3-未公開のラジアル改良ce073ced282cb6を入れる">R3. 未公開のラジアル改良（<code>ce073ce</code>・<code>d282cb6</code>）を入れる</h2>
+<p><strong>オーナーの了承（<a href="#doc-decisions">DECISIONS.md</a> の D2）を得てから。</strong></p>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/Fractas-portal-radial
+git pull
+git cherry-pick ce073ce          # 軽量化
+git cherry-pick d282cb6          # ハイスコア・ミュート・GAME OVER 画面
+git push origin portal-radial
+</code></pre>
+<p>2026-09-15 に試した結果: <code>portal-radial</code> の上に、2つとも<strong>ぶつからずに</strong>入ります（ラジアル版のまま・言語SDKの配線も残る・ハイスコアのキー <code>fractas_high_score</code> が増える）。<code>d282cb6</code> は <code>GAME_DEVELOPMENT_HANDOVER.md</code> も一緒に足しますが、害はありません。
+ぶつかった（<code>CONFLICT</code> と出た）ときは <code>git cherry-pick --abort</code> で元に戻し、オーナーに報告します（無理に直さない・force push しない）。</p>
+<p>あとは R2 の 3 と 5〜9。とくに確かめること:
+- ポータルの枠の中（縦長・スマホの幅）で、ミュートボタンと GAME OVER 画面が崩れないか
+- ハイスコアが保存されるか（<code>localStorage</code> の <code>fractas_high_score</code>。これはゲームだけのキーなので書いてよい。<code>preferred_lang</code> は書かない）
+- スコアが今までどおりランキングに届くか（<code>mode:'turn3'</code> のまま）</p>
+<hr />
+<h2 id="doc-runbook-r4-言語sdkが新しくなったとき">R4. 言語SDKが新しくなったとき</h2>
+<p>SDK の正本は、ポータルの <code>sdk/html/hi-game-lang.js</code>。status.sh で「SDK と違う」と出たら、<strong>丸ごと置き換える</strong>だけです（中身を書き換えるのは禁止）。
+main（資料のフォルダ）と portal-radial（直すフォルダ）の両方を置き換えます。</p>
+<pre><code class="language-bash">mkdir -p /Volumes/PINK/Development/_work
+curl -fsSL &quot;https://hiroakiishibashi.com/sdk/html/hi-game-lang.js?cb=$RANDOM$RANDOM&quot; -o /Volumes/PINK/Development/_work/hi-game-lang.js
+for d in /Volumes/PINK/Development/Fractas /Volumes/PINK/Development/Fractas-portal-radial; do
+  ( cd &quot;$d&quot; &amp;&amp; git pull &amp;&amp; cp /Volumes/PINK/Development/_work/hi-game-lang.js hi-game-lang.js \
+    &amp;&amp; git add hi-game-lang.js &amp;&amp; git commit -m &quot;Update bundled hi-game-lang.js to the current portal SDK&quot; &amp;&amp; git push )
+done
+</code></pre>
+<p>ポータル側のコピー（<code>games/fractas/game/hi-game-lang.js</code>）は、Web スレッドが SDK を更新するときに一緒に直すことが多いです。直っていなければ（status.sh の「本番ゲームの同梱コピーが SDK とずれている」）、R2 の 5〜7。</p>
+<hr />
+<h2 id="doc-runbook-r5-翻訳日本語などを足す">R5. 翻訳（日本語など）を足す</h2>
+<p>決まりの正本: https://hiroakiishibashi.com/docs/game-language-spec.md（とくに §1・§3・§4）</p>
+<p><strong>1.</strong> 画面に出る英語を、1か所の辞書に集める。どこに英語があるかは <a href="#doc-codemap-portal-radial">codemap/portal-radial.md</a> の「画面に出る文字」。</p>
+<pre><code class="language-js">const DICT = {
+  en: { turnsLeft: 'TURNS LEFT', turnLeft: 'TURN LEFT', judgement: 'JUDGEMENT', gameOver: 'GAME OVER' /* … */ },
+  ja: { turnsLeft: 'のこりターン', turnLeft: 'のこりターン', judgement: 'はんてい', gameOver: 'ゲームオーバー' /* … */ },
+};
+function t(key) { return DICT[LANG]?.[key] ?? DICT.en[key] ?? key; }   // || ではなく ?? を使う
+</code></pre>
+<ol start="2">
+<li><code>&lt;head&gt;</code> の初期化の <code>langs</code> に、<strong>本当に辞書がある言語だけ</strong>を書く: <code>HiLang.init({ id:'fractas', langs:['en','ja'] })</code></li>
+<li>遊んでいる途中の切り替えに対応できないなら <code>live:false</code>（既定）のまま。ポータルが「次の読み込みから」と案内する。<strong>自動でリロードしない</strong>。</li>
+<li>読み上げ（<code>speakTurnPrompt</code>）の文と、声の言語も <code>LANG</code> に合わせる。</li>
+<li><code>preferred_lang</code> には書かない。</li>
+<li>ポータルの説明文（<code>js/i18n/*.js</code> の <code>game.fractas.*</code>）は、もう6言語ある。</li>
+<li>R2 の 3〜9 で公開。確かめ方: ポータルで JA → 日本語／KO → 英語＋枠の下に「이 게임은 English / 日本語 로 이용할 수 있습니다.」</li>
+</ol>
+<hr />
+<h2 id="doc-runbook-r6-正方形版をポータルに出す">R6. 正方形版をポータルに出す</h2>
+<p><strong>オーナーの了承（D1）を得てから。</strong> ランキングの扱い（D4）も一緒に決めること。</p>
+<p><strong>1.</strong> 写す（安全装置を外すフラグが要る）</p>
+<pre><code class="language-bash">bash scripts/sync-to-portal.sh &lt;W&gt; --from main --i-have-owner-approval
+</code></pre>
+<p><strong>2.</strong> 説明文を正方形版に書き換える:
+- <code>js/i18n/{en,ja,ko,es,pt,zh}.js</code> の <code>game.fractas.desc</code> と <code>game.fractas.how</code>（6言語すべて）
+- <code>games/fractas/index.html</code> の最初に出る文（103〜104行目付近）
+- トップの <code>index.html</code> のカード（117行目付近）
+3. キービジュアル: 新しい版を足して、参照を切り替える（上書きしない）。<code>assets/games/keyvisuals/variants/fractas-hero-&lt;次の文字&gt;.jpg</code> を作り、<code>js/user-ui.js</code> と <code>index.html</code> の参照を変える。<code>node tools/check-assets.mjs</code> で確かめる。
+4. ランキング: D4 の決定どおりにする（game_id <code>fractas</code> をそのまま使うと、ラジアル版の点と混ざる）。
+5. R2 の 6〜9。資料の「0. 30秒でわかる現状」を必ず書き換える（ポータル＝正方形版に変わるので）。</p>
+<hr />
+<h2 id="doc-runbook-r7-github-pages正方形版を直す">R7. GitHub Pages（正方形版）を直す</h2>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/Fractas
+git switch main &amp;&amp; git pull
+# index.html を直す → 手元で確かめる: npx serve -l 3459 --no-clipboard . → http://localhost:3459/
+git add index.html &amp;&amp; git commit -m &quot;&lt;何を直したか&gt;&quot; &amp;&amp; git push
+gh api repos/hiroakiishibashi/fractas/pages/builds/latest --jq .status     # built になるまで1〜2分
+curl -sS &quot;https://hiroakiishibashi.github.io/fractas/?cb=$RANDOM$RANDOM&quot; | grep -c GRID_LIMIT
+</code></pre>
+<p>⚠️ <code>main</code> を直しても、<strong>ポータルは変わりません</strong>（それで正しい）。</p>
+<hr />
+<h2 id="doc-runbook-r8-本番を前の版に戻す">R8. 本番を前の版に戻す</h2>
+<p>いちばん安全なのは、問題のマージを打ち消す PR を作ることです:</p>
+<pre><code class="language-bash">cd &lt;W&gt;
+git log --oneline -10 -- games/fractas/          # 戻したいマージを探す
+git switch -c claude/fractas-revert
+git revert -m 1 &lt;マージのコミット&gt;
+git push -u origin HEAD
+gh pr create --fill &amp;&amp; gh pr merge --merge
+</code></pre>
+<p>公開していた版のタグから写し直すこともできます（そのあと R2 の 6〜7）:</p>
+<pre><code class="language-bash">bash scripts/sync-to-portal.sh &lt;W&gt; --from portal-live-2026-09-11
+</code></pre>
+<hr />
+<h2 id="doc-runbook-r9-サムネプレイ動画を撮り直す">R9. サムネ・プレイ動画を撮り直す</h2>
+<h3 id="doc-runbook-r9-1-全ゲーム共用の道具-gamerecおすすめ">R9-1. 全ゲーム共用の道具 gamerec（おすすめ）</h3>
+<p>場所: <code>/Volumes/PINK/Development/tools/gamerec/</code>（使い方は同じ場所の <code>README.md</code>）。ヘッドレスの Chrome で裏で録画するので、作業を止めません。</p>
+<p>Fractas の台本は <strong>作成済み</strong>（2026-09-15・<code>games/fractas.mjs</code>）。公開中のラジアル版を開き、録画の前に3手を指しておくので、<strong>最初の3秒でスキャナーが走り、10秒あたりで光ったブロックが消えて点が入る</strong>映像になります（1280×720・約22秒・約1.9MB。2026-09-15 に撮って確かめた）。</p>
+<pre><code class="language-bash">cd /Volumes/PINK/Development/tools/gamerec
+node record.mjs fractas            # → out/fractas.mp4
+node record.mjs fractas --gif      # GIF も作る
+</code></pre>
+<ul>
+<li>台本の座標は <strong>1280×720 が前提</strong>です（<code>--size</code> で縦にするなら、台本の中心の座標 <code>640, 360</code> と半径も変える）。</li>
+<li>手元の <code>portal-radial</code> を撮りたいときは、<code>games/fractas.mjs</code> の <code>url</code> を <code>http://localhost:3460/</code> に変え、<code>/Volumes/PINK/Development/Fractas-portal-radial</code> で <code>npx serve -l 3460 --no-clipboard .</code> を動かしておく。</li>
+<li>音は入りません（ヘッドレスのため）。撮った動画は、このリポジトリの <code>assets/</code> に置きます（例: <code>assets/fractas-radial-preview-2026-09.mp4</code>）。</li>
+</ul>
+<h3 id="doc-runbook-r9-2-2026-06-に使った方法canvas-から直接撮る">R9-2. 2026-06 に使った方法（canvas から直接撮る）</h3>
+<p>ブラウザでゲームを開き（<code>https://hiroakiishibashi.com/games/fractas/game/</code>）、開発者ツールのコンソールで:</p>
+<pre><code class="language-js">// サムネ（いまの1コマを JPEG で保存）
+document.getElementById('gameCanvas').toBlob(b =&gt; { const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'fractas-thumb.jpg'; a.click(); }, 'image/jpeg', 0.95);
+</code></pre>
+<pre><code class="language-js">// 15秒の動画（webm）
+const s = document.getElementById('gameCanvas').captureStream(30);
+const r = new MediaRecorder(s, { mimeType: 'video/webm;codecs=vp9', videoBitsPerSecond: 7e6 });
+const c = []; r.ondataavailable = e =&gt; e.data.size &amp;&amp; c.push(e.data);
+r.onstop = () =&gt; { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob(c, { type: 'video/webm' })); a.download = 'fractas-raw.webm'; a.click(); };
+r.start(); setTimeout(() =&gt; r.stop(), 15000);
+</code></pre>
+<p>保存されたファイルは PINK に移します（Mac 本体に置かない決まり）。mp4 にするには:</p>
+<pre><code class="language-bash">ffmpeg -y -i fractas-raw.webm -r 30 -c:v libx264 -pix_fmt yuv420p -crf 26 -preset slower -maxrate 3500k -bufsize 7000k -movflags +faststart -an fractas-preview.mp4
+</code></pre>
+<p>2026-06 の実績: 1280×720・15秒で mp4 が約5.4MB。
+置き場所: このリポジトリの <code>assets/</code>。ポータルのキービジュアルは R6 の 3 と同じ作法（新しい版を足して参照を切り替える）。</p>
+<hr />
+<h2 id="doc-runbook-r10-困ったとき">R10. 困ったとき</h2>
+<h3 id="doc-runbook-r10-1-直したのに本番が変わらない">R10-1. 直したのに本番が変わらない</h3>
+<ol>
+<li><code>?cb=</code> を毎回ちがう数字にしたか（<code>?cb=$RANDOM$RANDOM</code>）</li>
+<li><code>/games/fractas/game/index.html</code> と <code>/games/fractas/game/</code> は、キャッシュが別。両方を見る
+<strong>3.</strong> 配信が走ったか:</li>
+</ol>
+<pre><code class="language-bash">gh run view &lt;番号&gt; -R hiroakiishibashi/hiroakiishibashi-web --json jobs --jq '.jobs[].steps[] | &quot;\(.conclusion) \(.name)&quot;'
+</code></pre>
+<p>「配信」が success か（skipped なら配信されていない）
+4. <code>git fetch origin &amp;&amp; git log origin/main -- games/fractas/</code> に自分のコミットがあるか（無ければ push 漏れか、マージ漏れ）</p>
+<h3 id="doc-runbook-r10-2-node-toolstest-game-langmjs-が落ちる">R10-2. <code>node tools/test-game-lang.mjs</code> が落ちる</h3>
+<p>「同梱コピーが SDK と一致している: games/fractas/game/hi-game-lang.js」が ✗ なら R4。</p>
+<h3 id="doc-runbook-r10-3-gh-pr-create-が-api-rate-limit-exceeded-で失敗する">R10-3. <code>gh pr create</code> が <code>API rate limit exceeded</code> で失敗する</h3>
+<p>GitHub の GraphQL の回数制限です（1時間で戻る）。REST で代わりができます:</p>
+<pre><code class="language-bash">N=$(gh api repos/hiroakiishibashi/hiroakiishibashi-web/pulls -f title=&quot;Fractas: &lt;何をしたか&gt;&quot; -f head=&quot;&lt;ブランチ名&gt;&quot; -f base=main -f body=&quot;&lt;説明&gt;&quot; --jq .number)
+gh api -X PUT repos/hiroakiishibashi/hiroakiishibashi-web/pulls/$N/merge -f merge_method=merge
+</code></pre>
+<p>残りの回数: <code>gh api rate_limit --jq '.resources.graphql'</code></p>
+<h3 id="doc-runbook-r10-4-pink-で-git-が動かない">R10-4. PINK で git が動かない</h3>
+<p><a href="#doc-pitfalls">PITFALLS.md</a> の P7。新しくクローンして作業する（R0）。</p>
+<h3 id="doc-runbook-r10-5-ランキングに点が入らない">R10-5. ランキングに点が入らない</h3>
+<ol>
+<li>ログインしているか（していないと保存されない）</li>
+<li>ブラウザの開発者ツールに <code>[saveScore] saved:</code> が出ているか
+<strong>3.</strong> <code>game_catalog</code> に <code>fractas</code> があるか（2026-09-15 時点で enabled=true）。読むだけの確認:</li>
+</ol>
+<pre><code class="language-bash">ANON=$(grep -oE &quot;eyJ[A-Za-z0-9._-]{100,}&quot; &lt;W&gt;/js/supabase-client.js | head -1)
+curl -sS &quot;https://ddfhngfymavzsyktiuua.supabase.co/rest/v1/game_catalog?select=game_id,enabled&amp;game_id=eq.fractas&quot; -H &quot;apikey: $ANON&quot; -H &quot;Authorization: Bearer $ANON&quot;
+</code></pre>
+<p>（公開用の anon キーを、ポータルのファイルから読んでいるだけ。秘密の値ではない。<code>tools/new-game-check.mjs</code> は秘密の設定ファイルを読むので、AI は勝手に実行しない）</p></section><section class="doc" id="doc-pitfalls"><p class="eyebrow">docs/PITFALLS.md</p><h1 id="doc-pitfalls-fractas-踏んだ罠pitfalls">Fractas 踏んだ罠（PITFALLS）</h1>
+<blockquote>
+<p>実際に起きたこと・起きかけたことだけを書いています。「症状 → 原因 → どうするか」の順です。
+最終更新: 2026-09-15</p>
+</blockquote>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>ひとことで</th>
+<th>いつ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>P1</td>
+<td>同期コマンドで別のゲームに入れ替わる</td>
+<td>2026-09-11 に発見</td>
+</tr>
+<tr>
+<td>P2</td>
+<td>古い PR の版で演出が巻き戻る</td>
+<td>2026-08-20</td>
+</tr>
+<tr>
+<td>P3</td>
+<td>言語SDKのコピーがずれて検査が落ちる</td>
+<td>ずっと</td>
+</tr>
+<tr>
+<td>P4</td>
+<td>ゲームが <code>preferred_lang</code> を書いてしまう</td>
+<td>2026-09-10（Lumina）</td>
+</tr>
+<tr>
+<td>P5</td>
+<td><code>wrangler deploy</code> で他の人の変更が消える</td>
+<td>2026-08-19〜20</td>
+</tr>
+<tr>
+<td>P6</td>
+<td>直したのに古い内容が見える（キャッシュ）</td>
+<td>ずっと</td>
+</tr>
+<tr>
+<td>P7</td>
+<td>PINK で git が <code>Operation not permitted</code></td>
+<td>2026-08-29</td>
+</tr>
+<tr>
+<td>P8</td>
+<td>PINK のポータルのクローンが不整合</td>
+<td>2026-09-11</td>
+</tr>
+<tr>
+<td>P9</td>
+<td>手元の <code>npx serve</code> で SDK が 404</td>
+<td>2026-09-11</td>
+</tr>
+<tr>
+<td>P10</td>
+<td>ヘッドレスでタイマーが進まない</td>
+<td>2026-06-06</td>
+</tr>
+<tr>
+<td>P11</td>
+<td>ポータルの外で遊んだ点がランキングに出ない</td>
+<td>2026-06-06</td>
+</tr>
+<tr>
+<td>P12</td>
+<td>ランキングに昔の版の点が混ざる</td>
+<td>2026-06〜</td>
+</tr>
+<tr>
+<td>P13</td>
+<td>Actions が緑なのに配信されていない</td>
+<td>2026-08-20</td>
+</tr>
+<tr>
+<td>P14</td>
+<td><code>gh pr create</code> が回数制限で失敗</td>
+<td>2026-09-15</td>
+</tr>
+<tr>
+<td>P15</td>
+<td>手元で <code>/cdn-cgi/trace</code> が 404</td>
+<td>2026-09-11</td>
+</tr>
+<tr>
+<td>P16</td>
+<td>別の環境が <code>main</code> に push している</td>
+<td>2026-07-26〜</td>
+</tr>
+<tr>
+<td>P17</td>
+<td>外部のライブラリがポータルで読めない</td>
+<td>ずっと</td>
+</tr>
+<tr>
+<td>P18</td>
+<td>作業のゴミ（43MB）がフォルダにある</td>
+<td>2026-06-08〜</td>
+</tr>
+<tr>
+<td>P19</td>
+<td>ブランチを切り替えたら資料と道具が消えた</td>
+<td>2026-09-15 に対策</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="doc-pitfalls-p1-同期コマンドで別のゲームに入れ替わる">P1. 同期コマンドで別のゲームに入れ替わる</h2>
+<ul>
+<li><strong>症状</strong>: README（や古い写し）の <code>cp /Volumes/PINK/Development/Fractas/index.html …/games/fractas/game/index.html</code> を打つと、公開中のラジアル版が正方形版に変わる。ランキングも別のゲームの点が混ざる。</li>
+<li><strong>原因</strong>: <code>main</code> が 2026-07-27 に別のゲーム（正方形版）に作り替えられた。ポータルはラジアル版のまま。</li>
+<li><strong>どうするか</strong>: 手で <code>cp</code> しない。<code>bash scripts/sync-to-portal.sh &lt;W&gt;</code> を使う（既定で <code>portal-radial</code> から写す。版が入れ替わるときは止まる）。</li>
+</ul>
+<h2 id="doc-pitfalls-p2-古い-pr-の版で演出が巻き戻る">P2. 古い PR の版で演出が巻き戻る</h2>
+<ul>
+<li><strong>症状</strong>: 2026-08-20、PR #3（<code>claude/fractus-mobile-dev-setup-22zje3</code>）の版を入れると、演出の速さが昔に戻るところだった。</li>
+<li><strong>原因</strong>: PR の版もターン制で行数も多く、新しそうに見えたが、演出の定数だけ古かった。</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>定数</th>
+<th>PR #3 の版</th>
+<th>公開中（正しい）</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CLEAR_FADE_DURATION</code></td>
+<td>560</td>
+<td><strong>920</strong></td>
+</tr>
+<tr>
+<td><code>FALL_MOVE_DURATION</code></td>
+<td>620</td>
+<td><strong>1560</strong></td>
+</tr>
+<tr>
+<td><code>CHARGE_MOVE_DURATION</code></td>
+<td>700</td>
+<td><strong>1470</strong></td>
+</tr>
+<tr>
+<td><code>CHARGE_START_INTERVAL</code></td>
+<td>30</td>
+<td><strong>85</strong></td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>どうするか</strong>: 「新しそう」で判断しない。定数を見比べる。PR #3 は取り込まずに閉じた（ブランチはその後に削除。中身は PR #3 のコミット <code>9e6091d</code> から見られる）。マージのあとは、演出の定数が上の表の「正しい」値のままかを確かめる:</li>
+</ul>
+<pre><code class="language-bash">curl -sSL &quot;https://hiroakiishibashi.com/games/fractas/game/?cb=$RANDOM$RANDOM&quot; | grep -oE &quot;const (CLEAR_FADE_DURATION|FALL_MOVE_DURATION|CHARGE_MOVE_DURATION|CHARGE_START_INTERVAL) = [0-9]+&quot;
+</code></pre>
+<p>全部の定数の一覧は <a href="#doc-codemap-portal-radial">codemap/portal-radial.md</a> の「定数」。</p>
+<h2 id="doc-pitfalls-p3-言語sdkのコピーがずれて検査が落ちる">P3. 言語SDKのコピーがずれて検査が落ちる</h2>
+<ul>
+<li><strong>症状</strong>: ポータルで <code>node tools/test-game-lang.mjs</code> が「同梱コピーが SDK と一致している: games/fractas/game/hi-game-lang.js ✗」。</li>
+<li><strong>原因</strong>: <code>hi-game-lang.js</code> は SDK の丸写しで、1バイトでも違うと落ちる。SDK が更新されたか、誰かが中身を触った。</li>
+<li><strong>どうするか</strong>: 中身を直さず、SDK で丸ごと置き換える（RUNBOOK の R4）。</li>
+</ul>
+<h2 id="doc-pitfalls-p4-ゲームが-preferred_lang-を書いてしまう">P4. ゲームが <code>preferred_lang</code> を書いてしまう</h2>
+<ul>
+<li><strong>症状</strong>: ゲームで言語を選ぶと、ポータルのヘッダーや他のゲームの言語まで変わる。</li>
+<li><strong>原因</strong>: <code>preferred_lang</code> はサイト全体の設定。Lumina が実際に書いていて、2026-09-10 に直された。</li>
+<li><strong>どうするか</strong>: ゲーム内の選択は <code>HiLang.set()</code> を使う（SDK が <code>hi_lang:fractas</code> に保存する）。</li>
+</ul>
+<h2 id="doc-pitfalls-p5-wrangler-deploy-で他の人の変更が消える">P5. <code>wrangler deploy</code> で他の人の変更が消える</h2>
+<ul>
+<li><strong>症状</strong>: 本番から、他のスレッドが出した変更がまとめて消える。</li>
+<li><strong>原因</strong>: <code>npx wrangler deploy</code> は差分でなく、ディレクトリを丸ごと置き換える。古いツリーから出すと巻き戻る（2026-08-19〜20 に何度も起きた）。</li>
+<li><strong>どうするか</strong>: 公開は hiroakiishibashi-web の「ブランチ → PR → main にマージ」だけ。</li>
+</ul>
+<h2 id="doc-pitfalls-p6-直したのに古い内容が見えるキャッシュ">P6. 直したのに古い内容が見える（キャッシュ）</h2>
+<ul>
+<li><strong>症状</strong>: 本番を開いても変わっていない。</li>
+<li><strong>原因</strong>: ① 同じ <code>?cb=</code> を使うとエッジのキャッシュが返る ② <code>/games/fractas/game/index.html</code> と <code>/games/fractas/game/</code> はキャッシュが別（前者は 307 で後者へ飛ぶ）。</li>
+<li><strong>どうするか</strong>: <code>?cb=$RANDOM$RANDOM</code> を毎回付ける。<code>curl -L</code> で飛び先まで見る。</li>
+</ul>
+<h2 id="doc-pitfalls-p7-pink-で-git-が-operation-not-permitted">P7. PINK で git が <code>Operation not permitted</code></h2>
+<ul>
+<li><strong>症状</strong>: <code>fatal: unable to access '.git/config': Operation not permitted</code>（PINK 上のリポジトリだけ）。</li>
+<li><strong>原因</strong>: macOS の一時的な状態らしい（2026-08-29 に全リポジトリで発生し、再起動なしで自然に直った）。</li>
+<li><strong>どうするか</strong>: 時間をおいてやり直す。だめなら別の場所に新しくクローンして作業する（ネット越しの clone・push は動く）。</li>
+</ul>
+<h2 id="doc-pitfalls-p8-pink-のポータルのクローンが不整合">P8. PINK のポータルのクローンが不整合</h2>
+<ul>
+<li><strong>症状</strong>: <code>/Volumes/PINK/Development/hiroakiishibashi-web</code> で <code>git status</code> すると、変更が79件・未追跡が48件ある。HEAD は 2026-09-02 のまま、中のファイルだけ 9/10 相当に新しい（2026-09-11 に確認）。</li>
+<li><strong>原因</strong>: 不明（誰かがファイルだけ書き換えた）。自分の作業ではないので触っていない。</li>
+<li><strong>どうするか</strong>: ここでは作業しない・ここから <code>tools/deploy.sh</code> もしない。毎回新しくクローンする（RUNBOOK の R0-2）。片付けは Web スレッドかオーナーに任せる。</li>
+</ul>
+<h2 id="doc-pitfalls-p9-手元の-npx-serve-で-sdk-が-404">P9. 手元の <code>npx serve</code> で SDK が 404</h2>
+<ul>
+<li><strong>症状</strong>: 手元でポータルのページを開くと、ゲームの <code>hi-game-lang.js</code> が 404。言語の案内が出ない。</li>
+<li><strong>原因</strong>: <code>npx serve</code> が <code>/games/fractas/game/index.html</code> を <code>/games/fractas/game</code>（最後のスラッシュ無し）に書き換えるので、相対パスが1階層上を指す。</li>
+<li><strong>どうするか</strong>: ページごと確かめるときは <code>python3 -m http.server &lt;ポート&gt; --directory &lt;W&gt;</code> を使う。ゲームだけなら <code>/games/fractas/game/</code>（最後にスラッシュ）で開く。</li>
+</ul>
+<h2 id="doc-pitfalls-p10-ヘッドレスでタイマーが進まない">P10. ヘッドレスでタイマーが進まない</h2>
+<ul>
+<li><strong>症状</strong>: ヘッドレスのブラウザで、iframe の中のゲームの時間が進まない。「壊れている」と誤診しかけた。</li>
+<li><strong>原因</strong>: 見えていない iframe では <code>requestAnimationFrame</code> が止まることがある。</li>
+<li><strong>どうするか</strong>: ゲームを直接開いて確かめる。または開発者ツールで <code>update(16)</code> を1回呼んで、判定の流れを確かめる。</li>
+</ul>
+<h2 id="doc-pitfalls-p11-ポータルの外で遊んだ点がランキングに出ない">P11. ポータルの外で遊んだ点がランキングに出ない</h2>
+<ul>
+<li><strong>症状</strong>: ゲームを直接開いて遊ぶと（ログインしていても）、ポータルのランキングに出ない。</li>
+<li><strong>原因</strong>: ポータルの外では公式SDK（<code>hiroakiishibashi-sdk.js</code>）で保存するが、SDK は <code>scores</code> テーブルに書く。ランキングは <code>plays</code> テーブルを見る。</li>
+<li><strong>どうするか</strong>: 仕様としてそのまま（ポータルで遊ぶのが本筋）。直すならポータル側の SDK の設計の話になる（Web スレッド）。</li>
+</ul>
+<h2 id="doc-pitfalls-p12-ランキングに昔の版の点が混ざる">P12. ランキングに昔の版の点が混ざる</h2>
+<ul>
+<li><strong>症状</strong>: 1位が 631,360 点（2026-06-05）。いまのターン制では届きにくい。</li>
+<li><strong>原因</strong>: ランキングは <code>plays</code> の全記録の「1人1件のベスト」。版が変わっても同じ <code>fractas</code> に積まれる。<code>metadata.mode</code> で見分けられる（無し＝最初期、<code>60sec</code>、<code>turn3</code>）。</li>
+<li><strong>どうするか</strong>: オーナーの判断待ち（DECISIONS の D4）。勝手に消さない。</li>
+</ul>
+<h2 id="doc-pitfalls-p13-actions-が緑なのに配信されていない">P13. Actions が緑なのに配信されていない</h2>
+<ul>
+<li><strong>症状</strong>: GitHub Actions の <code>deploy</code> は緑なのに、本番が変わらない。</li>
+<li><strong>原因</strong>: 2026-08-20 の時点では配信用のトークンが未登録で、配信のステップが「skipped」になっていた（2026-08-21 に有効化済み）。緑＝配信した、ではない。</li>
+<li><strong>どうするか</strong>: ステップを見る（RUNBOOK の R10-1 の 3）。「配信」が success であること。</li>
+</ul>
+<h2 id="doc-pitfalls-p14-gh-pr-create-が回数制限で失敗">P14. <code>gh pr create</code> が回数制限で失敗</h2>
+<ul>
+<li><strong>症状</strong>: <code>GraphQL: API rate limit already exceeded</code>。</li>
+<li><strong>原因</strong>: GitHub の GraphQL の1時間あたりの上限（ほかのスレッドと同じアカウントで使っている）。</li>
+<li><strong>どうするか</strong>: REST で PR を作ってマージする（RUNBOOK の R10-3）。</li>
+</ul>
+<h2 id="doc-pitfalls-p15-手元で-cdn-cgitrace-が-404">P15. 手元で <code>/cdn-cgi/trace</code> が 404</h2>
+<ul>
+<li><strong>症状</strong>: 手元でページを開くと、コンソールに <code>/cdn-cgi/trace</code> の 404 が2つ出る。</li>
+<li><strong>原因</strong>: Cloudflare の本番にしかない場所。手元には無い。</li>
+<li><strong>どうするか</strong>: 無視してよい（本番では出ない）。</li>
+</ul>
+<h2 id="doc-pitfalls-p16-別の環境が-main-に-push-している">P16. 別の環境が <code>main</code> に push している</h2>
+<ul>
+<li><strong>症状</strong>: 知らないコミットが <code>main</code> にある。<code>GAME_DEVELOPMENT_HANDOVER.md</code> にこのリポジトリが「/Users/hiroakiishibashi/Projects/fractas」にあると書いてある。</li>
+<li><strong>原因</strong>: 旧 MacBook Pro（Late 2011）＋ Aider の環境でも開発している。2026-07-26〜27 の改良と正方形版はそこから。</li>
+<li><strong>どうするか</strong>: 作業の前に必ず <code>git pull</code>。その文書は一部古い（ゲームの説明がラジアル版のまま）ので、この資料を正とする。</li>
+</ul>
+<h2 id="doc-pitfalls-p17-外部のライブラリがポータルで読めない">P17. 外部のライブラリがポータルで読めない</h2>
+<ul>
+<li><strong>症状</strong>: ゲームに CDN のライブラリを足すと、ポータルでだけ動かない。</li>
+<li><strong>原因</strong>: ポータルの CSP（<code>_headers</code>）が外部の読み込みを弾く。</li>
+<li><strong>どうするか</strong>: ライブラリはゲームのフォルダに同梱する（いまの Fractas は外部ライブラリなし）。</li>
+</ul>
+<h2 id="doc-pitfalls-p18-作業のゴミ43mbがフォルダにある">P18. 作業のゴミ（43MB）がフォルダにある</h2>
+<ul>
+<li><strong>症状</strong>: <code>/Volumes/PINK/Development/Fractas/.tmp-chrome-ui-check/</code>（Chrome の一時データ・43MB）と <code>outputs/</code>。</li>
+<li><strong>原因</strong>: 2026-06-08 ごろ、別のAIが画面を確かめたときの残り。</li>
+<li><strong>どうするか</strong>: <code>.gitignore</code> 済みなのでコミットには入らない。消すならオーナーに確かめてから（自分で作ったものではないため）。</li>
+</ul>
+<h2 id="doc-pitfalls-p19-ブランチを切り替えたら資料と道具が消えた">P19. ブランチを切り替えたら資料と道具が消えた</h2>
+<ul>
+<li><strong>症状</strong>: <code>/Volumes/PINK/Development/Fractas</code> で <code>portal-radial</code> に切り替えると、<code>docs/</code> と <code>scripts/</code> と <code>CLAUDE.md</code>（main のもの）が見えなくなる。</li>
+<li><strong>原因</strong>: <code>portal-radial</code> には、ゲームのファイルと短い <code>CLAUDE.md</code> しか入れていない（資料と道具は <code>main</code> だけにある）。</li>
+<li><strong>どうするか</strong>: 切り替えない。公開中の版は、専用フォルダ <code>/Volumes/PINK/Development/Fractas-portal-radial/</code>（git の worktree）で直す（RUNBOOK の R0-3）。<code>/Volumes/PINK/Development/Fractas</code> はいつも <code>main</code> のまま。</li>
+</ul></section><section class="doc" id="doc-decisions"><p class="eyebrow">docs/DECISIONS.md</p><h1 id="doc-decisions-fractas-決まったこと判断待ちdecisions">Fractas 決まったこと・判断待ち（DECISIONS）</h1>
+<blockquote>
+<p>「なぜ今こうなっているか」と「まだ決まっていないこと」。判断待ちは<strong>オーナーが決めます</strong>。
+AI は、選択肢と影響とおすすめを示すところまで。
+最終更新: 2026-09-15</p>
+</blockquote>
+<h2 id="doc-decisions-判断待ちオーナー">判断待ち（オーナー）</h2>
+<h3 id="doc-decisions-d1-ポータルに出すのはどちらの版か">D1. ポータルに出すのは、どちらの版か</h3>
+<ul>
+<li><strong>いま</strong>: ラジアル版（<code>portal-radial</code>）がポータル。正方形版（<code>main</code>）は GitHub Pages だけ。</li>
+<li><strong>選択肢</strong></li>
+<li><strong>A.</strong> ラジアル版のまま（何もしない）</li>
+<li><strong>B.</strong> 正方形版に入れ替える（同じ <code>fractas</code> の枠で）</li>
+<li><strong>C.</strong> 正方形版を別のゲームとして足す（新しい game_id と新しいページ）</li>
+</ul>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th></th>
+<th>A</th>
+<th>B</th>
+<th>C</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>作業の量</td>
+<td>なし</td>
+<td>中（RUNBOOK の R6）</td>
+<td>大（ページ・一覧・説明文・キービジュアル・<code>game_catalog</code> への登録）</td>
+</tr>
+<tr>
+<td>ランキング</td>
+<td>今のまま</td>
+<td>ラジアル版の点と混ざる（桁が違う）</td>
+<td>分かれる</td>
+</tr>
+<tr>
+<td>危なさ</td>
+<td>なし</td>
+<td>作りかけの部分が表に出る（色を見ない判定など）</td>
+<td>作業が多い</td>
+</tr>
+</tbody>
+</table></div>
+<ul>
+<li><strong>おすすめ: A（当面）。</strong> 正方形版は作り替えた直後の試作で、説明文・キービジュアル・ランキングの準備が無い。出すなら、今の遊び手とランキングを壊さない C のほうがよい。</li>
+</ul>
+<h3 id="doc-decisions-d2-ラジアル版の未公開の改良を出すか">D2. ラジアル版の未公開の改良を出すか</h3>
+<ul>
+<li><strong>中身</strong>: <code>ce073ce</code>（古い Mac 向けの軽量化）と <code>d282cb6</code>（ハイスコアの保存・ミュートボタン・GAME OVER 画面の強化）。</li>
+<li><strong>選択肢</strong>: A. 出す（RUNBOOK の R3）／ B. 出さない</li>
+<li><strong>影響</strong>: 見た目と遊び心地が少し変わる。端末にハイスコアなどを保存するようになる（ゲームだけのキーなので問題なし）。</li>
+<li><strong>おすすめ: A。</strong> ただし出す前に、ポータルの枠（縦長・スマホ）でボタンと GAME OVER 画面が崩れないかを確かめる。</li>
+</ul>
+<h3 id="doc-decisions-d3-このリポジトリを公開publicのままにするか">D3. このリポジトリを公開（PUBLIC）のままにするか</h3>
+<ul>
+<li><strong>いきさつ</strong>: 2026-07-26 に private で作ったが、別の環境で PUBLIC になった（GitHub Pages のため）。ほかのゲームのリポジトリは、ほとんど private。</li>
+<li><strong>選択肢</strong>: A. PUBLIC のまま／ B. private に戻す</li>
+<li><strong>影響</strong>: B にすると、無料プランでは GitHub Pages が止まる（正方形版の公開も止まる）。</li>
+<li><strong>おすすめ: D5 と一緒に決める。</strong> Pages を続けるなら A。秘密の値が入っていないことは、2026-09-15 に確かめた（公開用の anon キーも入っていない）。</li>
+</ul>
+<h3 id="doc-decisions-d4-ランキングに昔の版の点が混ざっている件">D4. ランキングに昔の版の点が混ざっている件</h3>
+<ul>
+<li><strong>いきさつ</strong>: <code>plays</code> の fractas は 65 件（2026-09-15）。1位の 631,360 点（2026-06-05）はエンドレス版の点。<code>metadata.mode</code> で版を見分けられる（無し＝最初期、<code>60sec</code>、<code>turn3</code>）。</li>
+<li><strong>選択肢</strong></li>
+<li><strong>A.</strong> そのまま</li>
+<li><strong>B.</strong> 表示を <code>turn3</code> だけに絞る（ポータルの <code>js/scores.js</code> の変更＝Web スレッドの作業）</li>
+<li><strong>C.</strong> 古い記録を消す（本番の DB を変える＝オーナーのターミナルで）</li>
+<li><strong>おすすめ: B。</strong> 記録は消さずに、表示だけ今の版にそろえる。</li>
+</ul>
+<h3 id="doc-decisions-d5-github-pages-で正方形版を公開し続けるか">D5. GitHub Pages で正方形版を公開し続けるか</h3>
+<ul>
+<li><strong>選択肢</strong>: A. 続ける／ B. やめる（GitHub の Settings → Pages）／ C. Pages をラジアル版（<code>portal-radial</code>）に向ける</li>
+<li><strong>影響</strong>: A でも害は小さい（別の場所で遊べるだけ。そこでの点はポータルのランキングに入らない）。</li>
+<li><strong>おすすめ: D1 と一緒に決める。</strong></li>
+</ul>
+<h3 id="doc-decisions-d6-急がない改善">D6. 急がない改善</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>改善</th>
+<th>中身</th>
+<th>手順</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>翻訳</td>
+<td>日本語などを足す</td>
+<td>RUNBOOK の R5</td>
+</tr>
+<tr>
+<td>スクショ</td>
+<td>ポータルの📷ボタンに対応する（<code>docs/game-screenshot-spec.md</code>・hi-game-shot.js）</td>
+<td>仕様書どおり</td>
+</tr>
+<tr>
+<td>撮影の台本</td>
+<td>✅ 2026-09-15 に作成済み（<code>tools/gamerec/games/fractas.mjs</code>・1280×720 前提）</td>
+<td>RUNBOOK の R9-1</td>
+</tr>
+<tr>
+<td>正方形版の判定</td>
+<td>2×2 の判定で色も見るか</td>
+<td>作った人（オーナー）に意図を聞く</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="doc-decisions-決まったことなぜそうしたか">決まったこと（なぜそうしたか）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>#</th>
+<th>日付</th>
+<th>決まったこと</th>
+<th>なぜ</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>K1</td>
+<td>2026-06-05</td>
+<td>ポータルには「枠のページ＋iframe」で載せる（Block Slide のページを元にした）</td>
+<td>既存のゲームと同じ作り。ゲームは単体でも動く</td>
+</tr>
+<tr>
+<td>K2</td>
+<td>2026-06-06</td>
+<td>埋め込み時のスコアは <code>postMessage</code> で親へ送る。公式SDKはポータルの外のときだけ読む</td>
+<td>ポータルの正式なやり方（<code>docs/game-integration.html</code>）。SDK は <code>scores</code> に書くので、ランキング（<code>plays</code>）には出ないため</td>
+</tr>
+<tr>
+<td>K3</td>
+<td>2026-06-06</td>
+<td>ポータルの <code>_headers</code> で <code>/sdk/*</code> に CORS を付ける</td>
+<td>外のサイトのゲームが SDK を読めるように（無いと読めなかった）</td>
+</tr>
+<tr>
+<td>K4</td>
+<td>2026-06-07</td>
+<td>ターン制にする（別のAI）</td>
+<td>60秒版は放置でも点が入り、ランキングが腕前を表さなかった</td>
+</tr>
+<tr>
+<td>K5</td>
+<td>2026-07-26</td>
+<td>ゲーム専用のリポジトリを作る（最初は private）</td>
+<td>ほかのゲームと同じく、ゲームごとにリポジトリを持つ</td>
+</tr>
+<tr>
+<td>K6</td>
+<td>2026-08-20</td>
+<td>PR #3 を取り込まずに閉じる</td>
+<td>演出の速さが4か所とも昔に戻るため（PITFALLS の P2）</td>
+</tr>
+<tr>
+<td>K7</td>
+<td>2026-09-11</td>
+<td><code>main</code> をポータルへ写さず、言語SDKを両方に別々に入れる</td>
+<td><code>main</code> は別のゲーム。写すと公開中のゲームが入れ替わる</td>
+</tr>
+<tr>
+<td>K8</td>
+<td>2026-09-15</td>
+<td>公開中の版を、ブランチ <code>portal-radial</code> とタグ <code>portal-live-2026-09-11</code> で固定する</td>
+<td>公開中のファイルを、誰でも迷わず取り出せるように</td>
+</tr>
+</tbody>
+</table></div></section><section class="doc" id="doc-prompts"><p class="eyebrow">docs/PROMPTS.md</p><h1 id="doc-prompts-fractas-新しいセッションに貼る文prompts">Fractas 新しいセッションに貼る文（PROMPTS）</h1>
+<blockquote>
+<p>Claude Code（や、ほかのAI）を新しく始めるときに、そのまま貼って使う文です。
+<code>〈〉</code> のところだけ書き換えます。性能の低いモデルでも同じ入り方ができるように、読む順番・守ること・止まるところを必ず入れています。
+最終更新: 2026-09-15</p>
+</blockquote>
+<hr />
+<h2 id="doc-prompts-0-どの作業でもまずこれ入り方">0. どの作業でも、まずこれ（入り方）</h2>
+<pre><code>Fractas（hiroakiishibashi.com の円形パズル）の作業をします。手をつける前に、必ずこの順で読んでください。
+
+1. /Volumes/PINK/Development/Fractas/CLAUDE.md        … 破ってはいけない約束
+2. /Volumes/PINK/Development/Fractas/docs/HANDOFF.md  … 全体像（とくに「0. 30秒でわかる現状」）
+3. cd /Volumes/PINK/Development/Fractas &amp;&amp; git pull &amp;&amp; bash scripts/status.sh の結果
+
+守ること:
+・main（正方形版）をポータルへ写さない。公開中の版はブランチ portal-radial（PINK では /Volumes/PINK/Development/Fractas-portal-radial で直す）
+・hi-game-lang.js を書き換えない／ゲームから preferred_lang を書かない
+・ポータルへの公開は hiroakiishibashi-web で「ブランチ → PR → main にマージ」。npx wrangler deploy と git add -A は使わない
+・PINK の hiroakiishibashi-web は使わず、新しくクローンする（docs/RUNBOOK.md の R0-2）
+・終わったら本番を ?cb=毎回ちがう数字 で確かめ、結果（コマンドの出力）を見せる
+
+まず status.sh の結果と「0. 30秒でわかる現状」との違いを報告し、作業に入る前に計画を短く見せてください。
+
+今日やってほしいこと: 〈ここに書く〉
+</code></pre>
+<p>PINK が見えない環境（クラウドなど）では、1〜2 のかわりにこちらを読んでもらいます:</p>
+<ul>
+<li>https://raw.githubusercontent.com/hiroakiishibashi/fractas/main/CLAUDE.md</li>
+<li>https://raw.githubusercontent.com/hiroakiishibashi/fractas/main/docs/HANDOFF.md</li>
+<li>まとめて1本: https://hiroakiishibashi.com/docs/handoff/fractas/fractas.md</li>
+</ul>
+<hr />
+<h2 id="doc-prompts-1-状態を点検するだけ何も変えない">1. 状態を点検するだけ（何も変えない）</h2>
+<pre><code>〈0. の文〉
+今日やってほしいこと: 何も変更せずに、Fractas の現状を点検してください。
+・scripts/status.sh の結果
+・本番のページ https://hiroakiishibashi.com/games/fractas/ が 200 で開くか
+・ランキングの上位3件（読むだけ。docs/RUNBOOK.md の R10-5 の方法）
+・docs/DECISIONS.md の判断待ちで、状況が変わったものはあるか
+報告は、やさしい日本語・短い文で。
+</code></pre>
+<h2 id="doc-prompts-2-公開中のゲームラジアル版を直す">2. 公開中のゲーム（ラジアル版）を直す</h2>
+<pre><code>〈0. の文〉
+今日やってほしいこと: 公開中の Fractas（ラジアル版）で 〈直したいこと〉 を直して、公開してください。
+・手順は docs/RUNBOOK.md の R2 のとおり（直すのは /Volumes/PINK/Development/Fractas-portal-radial ＝ portal-radial 専用フォルダ → push → /Volumes/PINK/Development/Fractas で scripts/sync-to-portal.sh → ポータルで PR → マージ）
+・直す前に、どの関数・どの定数を触るかを docs/codemap/portal-radial.md で示して、計画を見せてください
+・手元で遊んで確かめたこと、配信の結果、status.sh の結果を最後に見せてください
+・main には触らないこと
+</code></pre>
+<h2 id="doc-prompts-3-未公開のラジアル改良ハイスコアミュートを出す">3. 未公開のラジアル改良（ハイスコア・ミュート）を出す</h2>
+<pre><code>〈0. の文〉
+今日やってほしいこと: オーナーの了承が出たので（DECISIONS の D2＝A）、ラジアル版に ce073ce と d282cb6 を入れて公開してください。
+・手順は docs/RUNBOOK.md の R3 → R2 の 3〜9
+・ポータルの枠の中（縦長・スマホの幅）で、ミュートボタンと GAME OVER 画面が崩れないかを、スクリーンショットで見せてください
+・preferred_lang は書かないこと（ハイスコアなどゲームだけのキーは書いてよい）
+</code></pre>
+<h2 id="doc-prompts-4-翻訳を足す">4. 翻訳を足す</h2>
+<pre><code>〈0. の文〉
+今日やってほしいこと: Fractas（ラジアル版）に 〈言語〉 の表示を足してください。
+・決まりは https://hiroakiishibashi.com/docs/game-language-spec.md。手順は docs/RUNBOOK.md の R5
+・langs には、本当に辞書がある言語だけを書く。辞書引きは ?? を使う（|| は使わない）
+・遊んでいる途中の切り替えに対応できないなら live:false のまま。自動でリロードしない
+・ポータルで JA／KO／EN に切り替えたときの表示を、それぞれ確かめて見せてください
+</code></pre>
+<h2 id="doc-prompts-5-正方形版をポータルに出す">5. 正方形版をポータルに出す</h2>
+<pre><code>〈0. の文〉
+今日やってほしいこと: オーナーの了承が出たので（DECISIONS の D1＝〈B または C〉、D4＝〈決まった方法〉）、正方形版をポータルに出してください。
+・手順は docs/RUNBOOK.md の R6
+・scripts/sync-to-portal.sh には --from main --i-have-owner-approval が要る
+・説明文（6言語）・キービジュアル・ランキングの扱いを、作業の前に一覧にして見せてください
+・終わったら docs/HANDOFF.md の「0. 30秒でわかる現状」を書き換えること
+</code></pre>
+<h2 id="doc-prompts-6-サムネプレイ動画を撮り直す">6. サムネ・プレイ動画を撮り直す</h2>
+<pre><code>〈0. の文〉
+今日やってほしいこと: 公開中の Fractas のサムネ（1280×720）と、15秒ほどのプレイ動画を撮り直してください。
+・手順は docs/RUNBOOK.md の R9（まず gamerec: cd /Volumes/PINK/Development/tools/gamerec &amp;&amp; node record.mjs fractas。うまくいかなければ R9-2）
+・最初の3秒に、スキャナーが走って消える場面を入れる
+・ファイルは PINK に置く（Mac 本体の Downloads に置きっぱなしにしない）。ポータルのキービジュアルは上書きせず、新しい版を足す
+</code></pre>
+<h2 id="doc-prompts-7-本番がおかしいとき">7. 本番がおかしいとき</h2>
+<pre><code>〈0. の文〉
+今日やってほしいこと: 本番の Fractas で 〈起きていること〉 が起きています。直す前に、まず原因を切り分けてください。
+・docs/PITFALLS.md と docs/RUNBOOK.md の R10 を先に読む
+・キャッシュ（?cb= は毎回ちがう数字）、配信のステップ（skipped でないか）、ポータルのコミットを順に確かめる
+・原因が分かったら、直し方の案を（おすすめつきで）見せて、了承を待ってから直す
+・急いで戻すときは RUNBOOK の R8
+</code></pre>
+<hr />
+<h2 id="doc-prompts-8-オーナーへの報告の型">8. オーナーへの報告の型</h2>
+<pre><code>【Fractas】〈何をしたか 1行〉
+・結果: 〈本番の URL と確かめ方〉
+・変えたファイル: 〈リポジトリとパス〉
+・残っていること: 〈あれば〉
+・判断してほしいこと: 〈あれば。おすすめを添える〉
+</code></pre></section><section class="doc" id="doc-codemap"><p class="eyebrow">docs/CODEMAP.md</p><h1 id="doc-codemap-fractas-コードの地図codemap">Fractas コードの地図（CODEMAP）</h1>
+<blockquote>
+<p>どちらの版も <code>index.html</code> 1ファイルです。ここでは「流れ」を説明します。
+行番号つきの索引（機械生成）: <strong><a href="#doc-codemap-portal-radial">codemap/portal-radial.md</a></strong>（公開中のラジアル版）／ <strong><a href="#doc-codemap-main">codemap/main.md</a></strong>（正方形版）
+コードを直したら索引を作り直す: <code>python3 scripts/gen-codemap.py origin/portal-radial &gt; docs/codemap/portal-radial.md</code>（<code>origin/portal-radial</code> は git のブランチの名前。フォルダではない）
+最終更新: 2026-09-15</p>
+</blockquote>
+<hr />
+<h2 id="doc-codemap-1-ファイルの形2つの版で同じ">1. ファイルの形（2つの版で同じ）</h2>
+<ol>
+<li><code>&lt;head&gt;</code>: <code>meta</code> → <code>&lt;title&gt;</code> → <strong>言語SDK</strong>（<code>&lt;script src="hi-game-lang.js"&gt;</code> と <code>var LANG = …</code>）→ <code>&lt;style&gt;</code></li>
+<li><code>&lt;body&gt;</code>: <code>#uiLayer</code>（スコアなど）→ <code>&lt;canvas id="gameCanvas"&gt;</code> → <code>#brand</code>（透かし）→ <code>#hint</code>（操作のヒント）→ <code>#gameOver</code></li>
+<li>ゲームの <code>&lt;script&gt;</code>（<code>&lt;body&gt;</code> の中）: 定数 → 状態の変数 → 関数 → 入力の登録 → <strong>ポータル連携</strong>（<code>reportScore</code>）→ ヒントの自動消去 → <code>resetGame()</code> で開始</li>
+</ol>
+<p>ビルドはありません。ファイルを直せば、そのまま動きます。</p>
+<hr />
+<h2 id="doc-codemap-2-ラジアル版公開中ブランチ-portal-radial">2. ラジアル版（公開中・ブランチ <code>portal-radial</code>）</h2>
+<h3 id="doc-codemap-2-1-盤面のデータ">2-1. 盤面のデータ</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>もの</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>board[i][s]</code></td>
+<td>色の番号（<code>-1</code> は空）。<code>i = r - MIN_R</code>（<code>getI(r)</code> / <code>getR(i)</code> で変換）</td>
+</tr>
+<tr>
+<td><code>SECTORS = 12</code></td>
+<td>扇形の数</td>
+</tr>
+<tr>
+<td><code>MIN_R = -12</code> 〜 <code>MAX_R = 9</code></td>
+<td>輪の番号（全22段）。中心に近いほど小さい</td>
+</tr>
+<tr>
+<td>半径</td>
+<td><code>CORE_RADIUS * SCALE_FACTOR^r</code>（<code>SCALE_FACTOR = 1.25</code>。1段ごとに 1.25 倍）</td>
+</tr>
+<tr>
+<td><code>lockedBoard</code></td>
+<td>光っている（消える予定の）セル</td>
+</tr>
+<tr>
+<td><code>reservedMatchCells</code></td>
+<td>いま3つ以上そろっていて「予約」されているセル</td>
+</tr>
+</tbody>
+</table></div>
+<h3 id="doc-codemap-2-2-1手の流れ入力">2-2. 1手の流れ（入力）</h3>
+<ol>
+<li><code>onPointerDown</code>: 触った位置の輪と扇形を覚える（<code>getGridFromPos</code>）。</li>
+<li><code>onPointerMove</code>: 最初に <strong>8px</strong> 動いた時点で（<code>8</code> は定数ではなく、コードに直接書かれた数字）、中心からの距離の変化（<code>distDiff</code>）と弧の長さ（<code>arcLength</code>）を比べ、大きいほうで <strong><code>SHIFT</code>（扇形をずらす）</strong> か <strong><code>ROTATE</code>（輪を回す）</strong> かを決める。</li>
+<li><code>onPointerUp</code>: 近い位置にスナップし、盤面の配列を回す／ずらす。<strong>実際に1コマ以上動いたときだけ</strong>（<code>sm !== 0</code> / <code>rm !== 0</code>）<code>completePlayerTurn()</code> を呼ぶ。</li>
+</ol>
+<h3 id="doc-codemap-2-3-ターンと判定">2-3. ターンと判定</h3>
+<pre><code>completePlayerTurn()      turnCount++ → triggerTurnPrompt()（中央の表示と読み上げ）
+   └ 3手目なら startTurnCheck()
+         スキャナー開始。scanMatchGroups = findMatchesGroups()（3つ以上つながった同じ色）
+update(dt) の中
+   スキャナーを中心から外へ進める（scannerSpeed = 0.04）
+   触れたグループを markCellLit() で光らせる
+   外端（MAX_R + 0.5）まで行ったら
+     ├ 光ったセルがある → CLEAR_FADE_DURATION（920ms）かけて消す
+     │     → addClearScore() → advanceChargeColor()（色を1つ増やす）
+     │     → applyGravityAnimated()（詰めて補充）→ resolveAllMatches()（補充でできた連鎖）
+     │     → finishTurnCheck()（turnCount = 0 に戻す）
+     └ 1つも無い → endGame()（GAME OVER・スコアを必ず送る）
+</code></pre>
+<ul>
+<li>点数: <code>addClearScore(個数, 連鎖) = 個数×10 ＋ max(0, 個数−3)×20×連鎖</code></li>
+<li>連鎖: 補充で偶然そろうのを <code>REFILL_CHAIN_CHANCE</code>（10%）だけ許し、1回の判定で最大 <code>MAX_JUDGEMENT_CHAINS</code>（3）まで。</li>
+<li>色の数: <code>START_COLOR_COUNT</code>（3）から、判定に成功するたびに +1、最大 <code>MAX_COLOR_COUNT</code>（6）。</li>
+</ul>
+<h3 id="doc-codemap-2-4-補充と落下">2-4. 補充と落下</h3>
+<ul>
+<li><code>applyGravityAnimated()</code>: ブロックを外側へ詰め、空いた中心側を新しい色で埋める。</li>
+<li>新しいブロックは1つずつ光りながら入る（<code>CHARGE_MOVE_DURATION</code> 1470ms・<code>CHARGE_START_INTERVAL</code> 85ms）。落ちるのは <code>FALL_MOVE_DURATION</code> 1560ms。</li>
+<li>最初の盤面と、盤面が外へずれて中心に新しい段が入るとき（<code>boardShiftOutward()</code>）は <code>getSafeColorIdx()</code>: 置いてもすぐにはそろわない色を選ぶ。</li>
+<li>判定のあとの補充（<code>applyGravityAnimated()</code>）は <code>getChainFriendlyColor()</code>: <code>REFILL_CHAIN_CHANCE</code>（10%）の確率で「置くとそろう色」（連鎖のもと）を選び、それ以外は「置いてもそろわない色」を選ぶ。</li>
+<li>待っている間も、盤面はゆっくり外へ流れる（<code>AMBIENT_EXPANSION_SPEED</code>）。</li>
+</ul>
+<h3 id="doc-codemap-2-5-描画">2-5. 描画</h3>
+<ul>
+<li><code>gameLoop(timestamp)</code> が <code>requestAnimationFrame</code> で <code>update(dt)</code> と <code>draw()</code> を回す。</li>
+<li><code>draw()</code>: <code>buildBlockPath()</code>（扇形の <code>Path2D</code>）で全セルを描く → <code>drawScanner()</code> → <code>drawTurnPrompt()</code>（中央の数字）。</li>
+<li>色は <code>getColorString()</code>。テーマは <code>COSMIC</code> のまま（<code>THEME_CHANGE_SCORE_THRESHOLD</code> が無限大なので切り替わらない）。</li>
+</ul>
+<h3 id="doc-codemap-2-6-音と声">2-6. 音と声</h3>
+<ul>
+<li><code>startAudio()</code>: 最初の操作で <code>AudioContext</code> を作る（ブラウザの決まりで、操作の前には鳴らせない）。</li>
+<li>効果音は <code>playTone()</code> / <code>playGlide()</code> の組み合わせ（<code>playMoveSfx</code>・<code>playDialTickSfx</code>・<code>playScanSfx</code>・<code>playClearSfx</code> など）。音声ファイルは無い。</li>
+<li><code>speakTurnPrompt(remaining)</code>: 残りのターン数を英語で読み上げる（女性らしい英語の声を優先・音量 0.28）。</li>
+</ul>
+<h3 id="doc-codemap-2-7-ポータル連携">2-7. ポータル連携</h3>
+<ul>
+<li><code>PORTAL_GAME_ID = 'fractas'</code>、<code>inPortal</code>（iframe の中か）。</li>
+<li><code>reportScore(force)</code>: 10秒に1回まで・同じ点は送らない・<code>force</code> のときは待たない。<code>endGame()</code> と、<code>visibilitychange</code>・<code>pagehide</code>・<code>blur</code> で呼ぶ。</li>
+<li>送る中身: <code>{type:'SCORE_UPDATE', game:'fractas', score, metadata:{theme, mode:'turn3', turnsPerCheck, turns, checks, colorCount}}</code>。</li>
+<li>ポータルの外では、公式SDK（<code>hiroakiishibashi-sdk.js</code>）を後から読み込んで <code>saveScore</code> する。</li>
+</ul>
+<h3 id="doc-codemap-2-8-よく触る調整つまみ">2-8. よく触る調整つまみ</h3>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>定数</th>
+<th>いまの値</th>
+<th>何が変わるか</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TURNS_PER_CHECK</code></td>
+<td>3</td>
+<td>何手ごとに判定するか</td>
+</tr>
+<tr>
+<td><code>START_COLOR_COUNT</code> / <code>MAX_COLOR_COUNT</code></td>
+<td>3 / 6</td>
+<td>色の数の始まりと上限（多いほどそろいにくい）</td>
+</tr>
+<tr>
+<td><code>CLEAR_FADE_DURATION</code></td>
+<td>920</td>
+<td>消えるまでの演出の長さ（ms）</td>
+</tr>
+<tr>
+<td><code>FALL_MOVE_DURATION</code></td>
+<td>1560</td>
+<td>落ちる演出の長さ（ms）</td>
+</tr>
+<tr>
+<td><code>CHARGE_MOVE_DURATION</code> / <code>CHARGE_START_INTERVAL</code></td>
+<td>1470 / 85</td>
+<td>補充の演出の長さと間隔（ms）</td>
+</tr>
+<tr>
+<td><code>REFILL_CHAIN_CHANCE</code></td>
+<td>0.10</td>
+<td>補充で連鎖を許す確率</td>
+</tr>
+<tr>
+<td><code>MAX_JUDGEMENT_CHAINS</code></td>
+<td>3</td>
+<td>1回の判定での連鎖の上限</td>
+</tr>
+<tr>
+<td><code>AMBIENT_EXPANSION_SPEED</code></td>
+<td>0.0015</td>
+<td>待っている間に盤面が外へ流れる速さ</td>
+</tr>
+<tr>
+<td><code>scannerSpeed</code>（変数）</td>
+<td>0.04</td>
+<td>スキャナーの速さ（1フレームで進む輪の数）</td>
+</tr>
+<tr>
+<td><code>SEND_THROTTLE_MS</code></td>
+<td>10000</td>
+<td>スコアを送る間隔の最小（ms）</td>
+</tr>
+</tbody>
+</table></div>
+<p>⚠️ 演出の4つ（<code>CLEAR_FADE_DURATION</code> など）は、昔の PR の版に戻さないこと（<a href="#doc-pitfalls">PITFALLS.md</a> の P2）。公開中の値の確かめ方:</p>
+<pre><code class="language-bash">curl -sSL &quot;https://hiroakiishibashi.com/games/fractas/game/?cb=$RANDOM$RANDOM&quot; | grep -oE &quot;const [A-Z_]+ = [0-9.]+&quot;
+</code></pre>
+<hr />
+<h2 id="doc-codemap-3-正方形版main">3. 正方形版（<code>main</code>）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>もの</th>
+<th>意味</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>blocks[]</code></td>
+<td>正方形のブロック（<code>gx</code>・<code>gy</code>・<code>size</code>＝1/2/4・<code>colorIdx</code> など）</td>
+</tr>
+<tr>
+<td><code>GRID_LIMIT = 8</code></td>
+<td>中心から ±8 マスが外枠。ここに届くと GAME OVER</td>
+</tr>
+<tr>
+<td><code>AUTO_SPAWN_INTERVAL_MS = 1500</code></td>
+<td>中心から新しいブロックが生える間隔</td>
+</tr>
+</tbody>
+</table></div>
+<p>流れ:</p>
+<pre><code>spawnAutomaticSquare()（1.5秒ごと）
+   中心の近くに1つ生やす → pushBranchOutward() でつながった枝を外へ押す
+   3回に1回は、もう1本押す
+   どれかが外枠に届いたら endGame()
+onPointerDown / onPointerMove
+   ブロックを辺にそってドラッグ。isValidPosition()（重ならない・辺で接する・かたまりが1つにつながったまま＝isFullyConnectedCluster()）
+onPointerUp
+   スナップして動いていれば totalTurns++ → checkMatches()
+checkMatches()
+   同じ大きさ（1・2・4）の 4つが 2×2 に並んでいたら消す（⚠️ 色は見ていない）
+   点 = 400 × 大きさ × 連鎖 → compactClusterTowardsCore()（中心へ詰める）→ もう一度 checkMatches()
+</code></pre>
+<ul>
+<li>端末に保存: <code>fractas_high_score</code>・<code>fractas_muted</code>・<code>fractas_games_played</code>（<code>loadSavedData()</code>）。</li>
+<li>画面: ミュートボタン（<code>#audioToggleBtn</code>）、GAME OVER の成績と「PLAY AGAIN」（<code>#restartBtn</code>）、「NEW HIGH SCORE!」。</li>
+<li>ポータル連携はラジアル版と同じ作り（<code>mode: 'square_cluster'</code>）。</li>
+</ul>
+<hr />
+<h2 id="doc-codemap-4-1ファイルを読むときのコツ">4. 1ファイルを読むときのコツ</h2>
+<ul>
+<li>関数を探すときは、索引（<code>codemap/*.md</code>）の行番号から入る。<code>grep -n "function 名前" index.html</code> でもよい。</li>
+<li>定数はファイルの上のほう（ゲームの <code>&lt;script&gt;</code> の直後）に集まっている。</li>
+<li>変数の多くは <code>let</code> で、ブラウザの開発者ツールのコンソールから名前で読める（例: <code>score</code>・<code>turnCount</code>・<code>isGameOver</code>）。確かめるときに便利。</li>
+</ul></section><section class="doc" id="doc-codemap-portal-radial"><p class="eyebrow">docs/codemap/portal-radial.md</p><h1 id="doc-codemap-portal-radial-コード索引-originportal-radial4db0da4ラジアル版ターン制">コード索引 — <code>origin/portal-radial</code>（4db0da4・ラジアル版（ターン制））</h1>
+<blockquote>
+<p>機械生成: <code>python3 scripts/gen-codemap.py origin/portal-radial</code>。行番号はこの版の <code>index.html</code>（全 1916 行）のもの。
+手で直さない。コードを直したら作り直す。流れの説明は <a href="#doc-codemap">../CODEMAP.md</a>。</p>
+</blockquote>
+<h2 id="doc-codemap-portal-radial-ファイルの区切り">ファイルの区切り</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>区切り</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">3</td>
+<td><code>&lt;head&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td><code>&lt;style&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">217</td>
+<td><code>&lt;body&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">252</td>
+<td><code>ゲームの &lt;script&gt;（ここから下がゲームの JS）</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1915</td>
+<td><code>&lt;/body&gt;</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-portal-radial-コメントの目印">コメントの目印</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>コメント</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">257</td>
+<td><code>// --- ゲーム定数・設定 ---</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">312</td>
+<td><code>// ★ スキャナー管理変数</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1000</td>
+<td><code>// ★ バグ修正: 未定義だった isSwapping を削除</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1304</td>
+<td><code>// ★ 修正：縦スライドの感度を1.5倍に引き上げ、より動かしやすく</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1598</td>
+<td><code>// ★ 追加：スキャナーが来る前の予兆演出</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1699</td>
+<td><code>// ★ 予兆演出を背面に描画</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1826</td>
+<td><code>// =====================================================</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1835</td>
+<td><code>// =====================================================</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1890</td>
+<td><code>// ---- 操作ヒントの自動消去 ----</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-portal-radial-定数調整つまみ">定数（調整つまみ）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>定義</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">258</td>
+<td><code>const SECTORS = 12</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">259</td>
+<td><code>const SCALE_FACTOR = 1.25</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">262</td>
+<td><code>const MIN_R = -12</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">263</td>
+<td><code>const MAX_R = 9</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">264</td>
+<td><code>const TOTAL_R = MAX_R - MIN_R + 1</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">266</td>
+<td><code>const THEMES = { … }</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">275</td>
+<td><code>const THEME_KEYS = Object.keys(THEMES)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">276</td>
+<td><code>const WAVE_TYPES = ['DEPTH', 'REVERSE', 'SPIRAL', 'SWEEP', 'NOISE']</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">286</td>
+<td><code>const TURNS_PER_CHECK = 3</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">287</td>
+<td><code>const START_COLOR_COUNT = 3</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">288</td>
+<td><code>const MAX_COLOR_COUNT = 6</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">289</td>
+<td><code>const AMBIENT_EXPANSION_SPEED = 0.0015</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">290</td>
+<td><code>const CLEAR_FADE_DURATION = 920</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">291</td>
+<td><code>const REFILL_CHAIN_CHANCE = 0.10</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">292</td>
+<td><code>const MAX_JUDGEMENT_CHAINS = 3</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">293</td>
+<td><code>const FALL_MOVE_DURATION = 1560</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">294</td>
+<td><code>const CHARGE_MOVE_DURATION = 1470</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">295</td>
+<td><code>const CHARGE_START_INTERVAL = 85</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">322</td>
+<td><code>const WAVE_DURATION = 1500</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">326</td>
+<td><code>const THEME_CHANGE_SCORE_THRESHOLD = Number.POSITIVE_INFINITY</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1836</td>
+<td><code>const PORTAL_GAME_ID = 'fractas'</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1841</td>
+<td><code>const SEND_THROTTLE_MS = 10000</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-portal-radial-関数62-個">関数（62 個）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>関数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">364</td>
+<td><code>function cellKey(r, s)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">368</td>
+<td><code>function getI(r)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">369</td>
+<td><code>function getR(i)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">371</td>
+<td><code>function resize()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">385</td>
+<td><code>function updateUI()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">397</td>
+<td><code>function updateTurnUI()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">410</td>
+<td><code>function startAudio()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">459</td>
+<td><code>function playTone(freq, duration = 0.18, type = 'sine', volume = 0.08, attack = 0.01, filterFreq = 2600)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">479</td>
+<td><code>function playGlide(startFreq, endFreq, duration, type, volume)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">496</td>
+<td><code>function playMoveSfx()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">501</td>
+<td><code>function playDialTickSfx(step = 0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">508</td>
+<td><code>function playReserveSfx(count = 1)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">515</td>
+<td><code>function playScanSfx()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">521</td>
+<td><code>function playClearSfx(blockCount, chainMultiplier = 1)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">528</td>
+<td><code>function playVanishSfx(blockCount = 1)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">536</td>
+<td><code>function playLightSfx(cell)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">546</td>
+<td><code>function playChargeSfx(count)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">555</td>
+<td><code>function playGameOverSfx()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">560</td>
+<td><code>function pickSpeechVoice()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">577</td>
+<td><code>function speakTurnPrompt(remaining)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">595</td>
+<td><code>function endGame()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">614</td>
+<td><code>function addClearScore(blockCount, chainMultiplier)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">621</td>
+<td><code>function clearLockedVisuals()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">630</td>
+<td><code>function markCellLit(cell, time)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">639</td>
+<td><code>function refreshReservedMatches()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">661</td>
+<td><code>function setBlocksToClear(cells)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">667</td>
+<td><code>function clearBlocksToClear()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">673</td>
+<td><code>function advanceChargeColor()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">678</td>
+<td><code>function startTurnCheck()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">694</td>
+<td><code>function finishTurnCheck()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">708</td>
+<td><code>function triggerTurnPrompt()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">719</td>
+<td><code>function completePlayerTurn()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">729</td>
+<td><code>function triggerThemeChange()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">751</td>
+<td><code>function lerpColor(c1, c2, t)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">763</td>
+<td><code>function pseudoRandom(r, s)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">768</td>
+<td><code>function getColorString(r, s, colorIdx, lightnessMultiplier = 1.0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">805</td>
+<td><code>function getColorAt(r, s)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">811</td>
+<td><code>function createsMatch(targetR, targetS, color)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">829</td>
+<td><code>function createsMatchInSim(simBoard, targetR, targetS, color)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">845</td>
+<td><code>function getSafeColorIdx(r, s)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">853</td>
+<td><code>function getChainFriendlyColor(simBoard, r, s)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">865</td>
+<td><code>function resetGame()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">944</td>
+<td><code>function isBusy()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">948</td>
+<td><code>function boardShiftOutward()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">999</td>
+<td><code>function applyGravityAnimated()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1080</td>
+<td><code>function findMatchesGroups()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1125</td>
+<td><code>function resolveAllMatches()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1194</td>
+<td><code>function getGridFromPos(x, y)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1214</td>
+<td><code>function onPointerDown(e)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1242</td>
+<td><code>function onPointerMove(e)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1320</td>
+<td><code>function onPointerUp(e)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1423</td>
+<td><code>function update(dt)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1545</td>
+<td><code>function buildBlockPath(r, s, additionalAngleOffset = 0, additionalRadiusOffset = 0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1568</td>
+<td><code>function getAnimatedBlockPathInfo(animObj)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1599</td>
+<td><code>function drawScannerWaitEffect()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1619</td>
+<td><code>function drawScanner()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1651</td>
+<td><code>function drawTurnPrompt()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1695</td>
+<td><code>function draw()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1809</td>
+<td><code>function gameLoop(timestamp)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1821</td>
+<td><code>function updateScoreUI()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1843</td>
+<td><code>function reportScore(force)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1893</td>
+<td><code>function dismissHint()</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-portal-radial-dom-の-idhtml-の部品">DOM の id（HTML の部品）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">219</td>
+<td><code>#uiLayer</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">221</td>
+<td><code>#scoreVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">222</td>
+<td><code>#chainContainer</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">222</td>
+<td><code>#chainVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">225</td>
+<td><code>#turnContainer</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">225</td>
+<td><code>#turnVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">225</td>
+<td><code>#turnMaxVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">226</td>
+<td><code>#colorContainer</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">226</td>
+<td><code>#colorCountVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">227</td>
+<td><code>#themeContainer</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">227</td>
+<td><code>#themeVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">231</td>
+<td><code>#gameCanvas</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">233</td>
+<td><code>#brand</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">235</td>
+<td><code>#hint</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">246</td>
+<td><code>#gameOver</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">248</td>
+<td><code>#finalScoreVal</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-portal-radial-画面に出る文字翻訳するならここ">画面に出る文字（翻訳するならここ）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>文字</th>
+<th>場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">8</td>
+<td>Fractas</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">221</td>
+<td>SCORE:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">222</td>
+<td>CHAIN!!</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">225</td>
+<td>TURNS:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">226</td>
+<td>COLORS:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">227</td>
+<td>THEME:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">227</td>
+<td>COSMIC</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">233</td>
+<td>FRACTAS</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">236</td>
+<td>FRACTAS</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">238</td>
+<td>↻ Drag around — rotate ring</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">241</td>
+<td>↕ Drag in/out — slide sector</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">243</td>
+<td>Make 3 moves. If nothing matches, it is game over.</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">247</td>
+<td>GAME OVER</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">248</td>
+<td>FINAL SCORE:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">249</td>
+<td>No matches found. Tap or click to restart.</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">267</td>
+<td>COSMIC</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">268</td>
+<td>CYBER</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">269</td>
+<td>TROPICAL</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">270</td>
+<td>VIVID</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">271</td>
+<td>SUNSET</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">272</td>
+<td>NEON</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">276</td>
+<td>DEPTH</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">276</td>
+<td>REVERSE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">276</td>
+<td>SPIRAL</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">276</td>
+<td>SWEEP</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">276</td>
+<td>NOISE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">318</td>
+<td>COSMIC</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">319</td>
+<td>COSMIC</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">320</td>
+<td>DEPTH</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">331</td>
+<td>WAIT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">582</td>
+<td>One turn left</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">582</td>
+<td>Judgement</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">600</td>
+<td>WAIT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">713</td>
+<td>SCAN</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">714</td>
+<td>TURN LEFT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">714</td>
+<td>TURNS LEFT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">714</td>
+<td>JUDGEMENT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">781</td>
+<td>DEPTH</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">782</td>
+<td>REVERSE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">783</td>
+<td>SPIRAL</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">787</td>
+<td>SWEEP</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">788</td>
+<td>NOISE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">895</td>
+<td>COSMIC</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">896</td>
+<td>COSMIC</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">897</td>
+<td>DEPTH</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">920</td>
+<td>WAIT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1225</td>
+<td>WAIT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1255</td>
+<td>WAIT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1262</td>
+<td>SHIFT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1263</td>
+<td>ROTATE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1267</td>
+<td>ROTATE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1294</td>
+<td>SHIFT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1328</td>
+<td>WAIT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1333</td>
+<td>ROTATE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1370</td>
+<td>SHIFT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1678</td>
+<td>Brush Script MT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1678</td>
+<td>Snell Roundhand</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1678</td>
+<td>Apple Chancery</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1678</td>
+<td>Segoe Script</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1683</td>
+<td>SCAN</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1686</td>
+<td>Brush Script MT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1686</td>
+<td>Snell Roundhand</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1686</td>
+<td>Apple Chancery</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1686</td>
+<td>Segoe Script</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1708</td>
+<td>ROTATE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1710</td>
+<td>ROTATE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1716</td>
+<td>SHIFT</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1718</td>
+<td>SHIFT</td>
+<td>JS</td>
+</tr>
+</tbody>
+</table></div>
+<p>読み上げの文は <code>speakTurnPrompt</code> の中にある（ラジアル版）。</p>
+<h2 id="doc-codemap-portal-radial-端末に保存するキーlocalstorage">端末に保存するキー（localStorage）</h2>
+<ul>
+<li>なし</li>
+</ul>
+<h2 id="doc-codemap-portal-radial-イベント入力ページの出入り">イベント（入力・ページの出入り）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>対象:イベント</th>
+<th>行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>canvas:mousedown</code></td>
+<td>1414, 1899</td>
+</tr>
+<tr>
+<td><code>canvas:mousemove</code></td>
+<td>1415</td>
+</tr>
+<tr>
+<td><code>canvas:touchmove</code></td>
+<td>1418</td>
+</tr>
+<tr>
+<td><code>canvas:touchstart</code></td>
+<td>1417, 1900</td>
+</tr>
+<tr>
+<td><code>gameOverEl:click</code></td>
+<td>1905</td>
+</tr>
+<tr>
+<td><code>gameOverEl:touchstart</code></td>
+<td>1906</td>
+</tr>
+<tr>
+<td><code>window:blur</code></td>
+<td>1880</td>
+</tr>
+<tr>
+<td><code>window:mouseup</code></td>
+<td>1416</td>
+</tr>
+<tr>
+<td><code>window:pagehide</code></td>
+<td>1879</td>
+</tr>
+<tr>
+<td><code>window:resize</code></td>
+<td>382</td>
+</tr>
+<tr>
+<td><code>window:touchend</code></td>
+<td>1419</td>
+</tr>
+<tr>
+<td><code>window:visibilitychange</code></td>
+<td>1876</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-portal-radial-親ポータルへ送るメッセージ">親（ポータル）へ送るメッセージ</h2>
+<ul>
+<li>type: <code>SCORE_UPDATE</code></li>
+<li>metadata.mode: <code>turn3</code></li>
+</ul></section><section class="doc" id="doc-codemap-main"><p class="eyebrow">docs/codemap/main.md</p><h1 id="doc-codemap-main-コード索引-originmaina6fb67b正方形版">コード索引 — <code>origin/main</code>（a6fb67b・正方形版）</h1>
+<blockquote>
+<p>機械生成: <code>python3 scripts/gen-codemap.py origin/main</code>。行番号はこの版の <code>index.html</code>（全 1284 行）のもの。
+手で直さない。コードを直したら作り直す。流れの説明は <a href="#doc-codemap">../CODEMAP.md</a>。</p>
+</blockquote>
+<h2 id="doc-codemap-main-ファイルの区切り">ファイルの区切り</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>区切り</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">3</td>
+<td><code>&lt;head&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">14</td>
+<td><code>&lt;style&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">319</td>
+<td><code>&lt;body&gt;</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">379</td>
+<td><code>ゲームの &lt;script&gt;（ここから下がゲームの JS）</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1283</td>
+<td><code>&lt;/body&gt;</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-main-コメントの目印">コメントの目印</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>コメント</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">384</td>
+<td><code>// --- ゲーム定数・設定 ---</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-main-定数調整つまみ">定数（調整つまみ）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>定義</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">385</td>
+<td><code>const START_COLOR_COUNT = 3</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">386</td>
+<td><code>const MAX_COLOR_COUNT = 6</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">387</td>
+<td><code>const GRID_LIMIT = 8</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">391</td>
+<td><code>const AUTO_SPAWN_INTERVAL_MS = 1500</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">395</td>
+<td><code>const THEMES = { … }</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">404</td>
+<td><code>const THEME_KEYS = Object.keys(THEMES)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">962</td>
+<td><code>const PORTAL_GAME_ID = 'fractas'</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">967</td>
+<td><code>const SEND_THROTTLE_MS = 10000</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-main-関数39-個">関数（39 個）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>関数</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">432</td>
+<td><code>function loadSavedData()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">447</td>
+<td><code>function updateHighScoreUI()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">452</td>
+<td><code>function updateAudioBtnUI()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">466</td>
+<td><code>function toggleMute(e)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">481</td>
+<td><code>function resize()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">498</td>
+<td><code>function doesOverlap(x1, y1, s1, x2, y2, s2)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">503</td>
+<td><code>function hasEdgeContact(x1, y1, s1, x2, y2, s2)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">510</td>
+<td><code>function isFullyConnectedCluster(testBlocks)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">540</td>
+<td><code>function isValidPosition(block, testGx, testGy, ignoreId = null)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">566</td>
+<td><code>function pushBranchOutward(spawnGx, spawnGy, size = 1)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">598</td>
+<td><code>function compactClusterTowardsCore()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">661</td>
+<td><code>function createBlock(gx, gy, size = 1, colorIdx = 0)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">679</td>
+<td><code>function updateUI()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">689</td>
+<td><code>function updateGrowthTimerUI()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">699</td>
+<td><code>function startAudio()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">713</td>
+<td><code>function playTone(freq, duration = 0.18, type = 'sine', volume = 0.08, attack = 0.01, filterFreq = 2600)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">733</td>
+<td><code>function playGlide(startFreq, endFreq, duration, type, volume)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">750</td>
+<td><code>function playMoveSfx()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">755</td>
+<td><code>function playSnapSfx()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">760</td>
+<td><code>function playClearSfx(sizeMultiplier = 1, chainMultiplier = 1)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">767</td>
+<td><code>function playGrowSfx()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">772</td>
+<td><code>function playGameOverSfx()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">778</td>
+<td><code>function checkMatches()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">823</td>
+<td><code>function addClearScore(size, chainMultiplier)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">830</td>
+<td><code>function spawnAutomaticSquare()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">875</td>
+<td><code>function resetGame()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">912</td>
+<td><code>function endGame()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">957</td>
+<td><code>function updateScoreUI()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">969</td>
+<td><code>function reportScore(force)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1007</td>
+<td><code>function dismissHint()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1017</td>
+<td><code>function getPxPos(gx, gy)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1024</td>
+<td><code>function onPointerDown(e)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1048</td>
+<td><code>function onPointerMove(e)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1085</td>
+<td><code>function onPointerUp()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1114</td>
+<td><code>function drawBlock(b, overridePx = null, overridePy = null, isGhost = false)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1165</td>
+<td><code>function drawGridBackground()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1205</td>
+<td><code>function update(dt)</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1223</td>
+<td><code>function draw()</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">1237</td>
+<td><code>function gameLoop(timestamp)</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-main-dom-の-idhtml-の部品">DOM の id（HTML の部品）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">321</td>
+<td><code>#uiLayer</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">323</td>
+<td><code>#scoreVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">324</td>
+<td><code>#bestScoreVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">325</td>
+<td><code>#chainContainer</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">325</td>
+<td><code>#chainVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">329</td>
+<td><code>#growthTimerBox</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">329</td>
+<td><code>#growthTimerVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">330</td>
+<td><code>#colorContainer</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">330</td>
+<td><code>#colorCountVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">331</td>
+<td><code>#themeContainer</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">331</td>
+<td><code>#themeVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">333</td>
+<td><code>#audioToggleBtn</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">337</td>
+<td><code>#gameCanvas</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">339</td>
+<td><code>#brand</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">341</td>
+<td><code>#hint</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">352</td>
+<td><code>#gameOver</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">355</td>
+<td><code>#newBestBadge</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">359</td>
+<td><code>#finalScoreVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">363</td>
+<td><code>#finalBestScoreVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">367</td>
+<td><code>#statMovesVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">371</td>
+<td><code>#statScansVal</code></td>
+</tr>
+<tr>
+<td style="text-align: right;">374</td>
+<td><code>#restartBtn</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-main-画面に出る文字翻訳するならここ">画面に出る文字（翻訳するならここ）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th style="text-align: right;">行</th>
+<th>文字</th>
+<th>場所</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: right;">8</td>
+<td>Fractas</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">323</td>
+<td>SCORE:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">324</td>
+<td>BEST:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">325</td>
+<td>CHAIN!!</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">329</td>
+<td>SPAWN IN:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">329</td>
+<td>s</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">330</td>
+<td>COLORS:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">331</td>
+<td>THEME:</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">331</td>
+<td>COSMIC</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">339</td>
+<td>FRACTAS</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">342</td>
+<td>FRACTAS</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">344</td>
+<td>🖱 Drag squares along connected edges (Outer squares shift together)</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">347</td>
+<td>⏹ Match 4 same-sized squares into 2×2 to clear!</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">349</td>
+<td>Squares emerge from root every 1.5s, pushing connected branches outward!</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">354</td>
+<td>GAME OVER</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">355</td>
+<td>NEW HIGH SCORE!</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">358</td>
+<td>FINAL SCORE</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">362</td>
+<td>BEST SCORE</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">366</td>
+<td>TOTAL MOVES</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">370</td>
+<td>SPAWNS SURVIVED</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">374</td>
+<td>PLAY AGAIN</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">375</td>
+<td>or press Space / Tap anywhere</td>
+<td>HTML</td>
+</tr>
+<tr>
+<td style="text-align: right;">396</td>
+<td>COSMIC</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">397</td>
+<td>CYBER</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">398</td>
+<td>TROPICAL</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">399</td>
+<td>VIVID</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">400</td>
+<td>SUNSET</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">401</td>
+<td>NEON</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">416</td>
+<td>COSMIC</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">458</td>
+<td>Unmute Sound</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">462</td>
+<td>Mute Sound</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">515</td>
+<td>CORE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1200</td>
+<td>CORE</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1272</td>
+<td>Space</td>
+<td>JS</td>
+</tr>
+<tr>
+<td style="text-align: right;">1272</td>
+<td>Enter</td>
+<td>JS</td>
+</tr>
+</tbody>
+</table></div>
+<p>読み上げの文は <code>speakTurnPrompt</code> の中にある（ラジアル版）。</p>
+<h2 id="doc-codemap-main-端末に保存するキーlocalstorage">端末に保存するキー（localStorage）</h2>
+<ul>
+<li><code>fractas_games_played</code></li>
+<li><code>fractas_high_score</code></li>
+<li><code>fractas_muted</code></li>
+</ul>
+<h2 id="doc-codemap-main-イベント入力ページの出入り">イベント（入力・ページの出入り）</h2>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>対象:イベント</th>
+<th>行</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>audioBtnEl:click</code></td>
+<td>1267</td>
+</tr>
+<tr>
+<td><code>audioBtnEl:touchstart</code></td>
+<td>1268</td>
+</tr>
+<tr>
+<td><code>canvas:mousedown</code></td>
+<td>1013, 1106</td>
+</tr>
+<tr>
+<td><code>canvas:mousemove</code></td>
+<td>1107</td>
+</tr>
+<tr>
+<td><code>canvas:touchmove</code></td>
+<td>1111</td>
+</tr>
+<tr>
+<td><code>canvas:touchstart</code></td>
+<td>1014, 1110</td>
+</tr>
+<tr>
+<td><code>gameOverEl:click</code></td>
+<td>1250</td>
+</tr>
+<tr>
+<td><code>gameOverEl:touchstart</code></td>
+<td>1251</td>
+</tr>
+<tr>
+<td><code>restartBtnEl:click</code></td>
+<td>1259</td>
+</tr>
+<tr>
+<td><code>window:keydown</code></td>
+<td>1271</td>
+</tr>
+<tr>
+<td><code>window:mouseup</code></td>
+<td>1108</td>
+</tr>
+<tr>
+<td><code>window:resize</code></td>
+<td>494</td>
+</tr>
+<tr>
+<td><code>window:touchend</code></td>
+<td>1112</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="doc-codemap-main-親ポータルへ送るメッセージ">親（ポータル）へ送るメッセージ</h2>
+<ul>
+<li>type: <code>SCORE_UPDATE</code></li>
+<li>metadata.mode: <code>square_cluster</code></li>
+</ul></section><section class="doc" id="doc-history"><p class="eyebrow">docs/HISTORY.md</p><h1 id="doc-history-fractas-年表history">Fractas 年表（HISTORY）</h1>
+<blockquote>
+<p>何が、いつ、なぜ変わったか。コミットの <code>fractas</code> はこのリポジトリ、<code>web</code> は hiroakiishibashi-web。
+最終更新: 2026-09-15</p>
+</blockquote>
+<div class="tbl"><table>
+<thead>
+<tr>
+<th>日付</th>
+<th>出来事</th>
+<th>記録</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2026-06-05</td>
+<td>元の試作 <code>Fractas.html</code>（「Fractus - Prototype v0.25」・エンドレス・自動スキャナー）を製品化。ポータルに掲載（Block Slide のページを元にした枠＋iframe・<code>SCORE_UPDATE</code> でランキング）。サムネと約15秒の動画を撮影</td>
+<td>web <code>78b2bdb</code></td>
+</tr>
+<tr>
+<td>2026-06-06</td>
+<td>別のAIが「60秒スコアアタック」に変更。確かめたうえで、SDK 対応（ポータルの外のときだけ公式SDK）と <code>_headers</code> の CORS（<code>/sdk/*</code>）を追加。放置でも点が入る問題を報告</td>
+<td>web <code>de4768d</code></td>
+</tr>
+<tr>
+<td>2026-06-06〜08</td>
+<td>別のAI（Codex）が改良を重ねる: 筆記体の文字、放置の点を抑える、<strong>ターン制に変更（06-07）</strong>、光で見せる描画、Web Audio の音楽と効果音、英語の読み上げ、表示をスコアだけに、補充の演出の直し</td>
+<td>web <code>3598478</code>（06-08）</td>
+</tr>
+<tr>
+<td>2026-06-13</td>
+<td>サイト全体の認証の安定化・XSS 対策の一環で、ゲームのファイルにも手が入る</td>
+<td>web <code>1344e43</code></td>
+</tr>
+<tr>
+<td>2026-06-18</td>
+<td>別のセッションが PR #3（モバイルの開発環境・スラッシュコマンド3本・当時のゲーム）を作る</td>
+<td>web PR #3</td>
+</tr>
+<tr>
+<td>2026-07-26 17:38</td>
+<td>専用リポジトリ <code>hiroakiishibashi/fractas</code> を private で作成。最初のコミットはポータルと同じラジアル版</td>
+<td>fractas <code>6a1e28a</code></td>
+</tr>
+<tr>
+<td>2026-07-26 19:30</td>
+<td>別の環境（旧 MacBook Pro ＋ Aider）が軽量化</td>
+<td>fractas <code>ce073ce</code></td>
+</tr>
+<tr>
+<td>2026-07-26 22:48</td>
+<td>同じ環境がハイスコア・ミュート・GAME OVER 画面を追加し、<code>GAME_DEVELOPMENT_HANDOVER.md</code> を足す。このころリポジトリが PUBLIC＋GitHub Pages に</td>
+<td>fractas <code>d282cb6</code></td>
+</tr>
+<tr>
+<td>2026-07-27 00:23〜00:47</td>
+<td>同じ環境が<strong>正方形版に作り替える</strong>（5コミット）。ポータルには出ていない</td>
+<td>fractas <code>3b3c201</code>〜<code>5cdcf46</code></td>
+</tr>
+<tr>
+<td>2026-08-20</td>
+<td>サイトの公開のルールが「main にマージ＝公開」に変わる。PR #3 は、演出の速さが4か所とも昔に戻るため取り込まずに閉じる</td>
+<td>web PR #3（close）</td>
+</tr>
+<tr>
+<td>2026-08-21</td>
+<td>Web スレッドが自動配信（GitHub Actions）を有効にする</td>
+<td>—</td>
+</tr>
+<tr>
+<td>2026-09-10</td>
+<td>Web スレッドが「ポータルの言語設定をゲームに伝える」しくみと、各ゲームへの依頼書を出す</td>
+<td>web PR #258</td>
+</tr>
+<tr>
+<td>2026-09-11</td>
+<td>言語SDKを配線。ポータルと <code>main</code> が別のゲームだと分かったので、写さずに両方へ別々に入れる。本番で確かめた</td>
+<td>web PR #264（<code>293bb02</code>）・fractas <code>a6fb67b</code></td>
+</tr>
+<tr>
+<td>2026-09-15</td>
+<td>この引き継ぎ資料一式を作る。公開中の版を、ブランチ <code>portal-radial</code> とタグ <code>portal-live-2026-09-11</code> で固定し、PINK に直す専用フォルダ <code>Fractas-portal-radial</code>（worktree）を作る。gamerec の台本を作り、公開中の版の動画を撮る</td>
+<td>fractas（この資料のコミット）・web（<code>docs/handoff/fractas/</code>）</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="doc-history-くわしく">くわしく</h2>
+<h3 id="doc-history-2026-06-05-製品化とポータル掲載">2026-06-05 製品化とポータル掲載</h3>
+<ul>
+<li>元の試作は、12セクター×リングの極座標の盤面に、自動で走るスキャナーがあり、放っておいても消えていくエンドレスのゲームだった。</li>
+<li>手を入れたところ: 名前を Fractas に統一、ページのタイトルと説明、はじめに出る操作のヒント（自動で消える）、「FRACTAS」の透かし、ポータルへのスコア送信（<code>SCORE_UPDATE</code>・10秒に1回・同じ点は送らない・離脱時に必ず送る）。ゲームの中身には触れていない。</li>
+<li>ポータル側: ページ（<code>games/fractas/index.html</code>・枠＋TOP5＋全ランキング）、トップのカード、<code>js/user-ui.js</code> の一覧、<code>js/i18n.js</code> の説明（英・日）、ランキングのタブ。</li>
+<li>サムネと動画: 本物の canvas から撮った（RUNBOOK の R9-2）。</li>
+</ul>
+<h3 id="doc-history-2026-06-06-60秒版と-sdk">2026-06-06 60秒版と SDK</h3>
+<ul>
+<li>別のAIが60秒のカウントダウンと GAME OVER を足した。時間切れ・結果の送信・再開を、実際のブラウザで確かめた。</li>
+<li>「SDK にも対応を」という依頼に対して: ポータルの正式なやり方は iframe から <code>postMessage</code>（<code>docs/game-integration.html</code>）。そこで、ポータルの中ではそのまま、外で開いたときだけ公式SDKを読むようにした。</li>
+<li>公式SDKが外のサイトから読めなかったので、ポータルの <code>_headers</code> に <code>/sdk/*</code> の CORS を足した。</li>
+<li>気づいたこと: 自動スキャナーのせいで、放置でも60秒で約1,270万点入る。ランキングが腕前を表さない（→ 翌日のターン制で解消）。</li>
+</ul>
+<h3 id="doc-history-2026-06-0708-ターン制と演出別のaicodex">2026-06-07〜08 ターン制と演出（別のAI・Codex）</h3>
+<ul>
+<li>時間制をやめ、「3手ごとに判定・マッチ0で GAME OVER」に。判定に成功するたびに色が増える（3→最大6）。</li>
+<li>描画を軽い「光」の表現に作り直し、予約と判定のときだけ光るようにした。スキャナーをゆっくりに（0.35→0.04）。</li>
+<li>音: Web Audio の環境音と効果音、回すときの小さな「チキチキ」、読み上げ（英語・女性の声を優先・音量 0.28）。</li>
+<li>補充: 1つずつ光りながら入る。落下 1560ms・チャージ 1470ms・間隔 85ms。消える演出 920ms。</li>
+</ul>
+<h3 id="doc-history-2026-07-2627-専用リポジトリと別の環境での作り替え">2026-07-26〜27 専用リポジトリと、別の環境での作り替え</h3>
+<ul>
+<li>他のゲームと同じく、専用のリポジトリを作った（private・6ファイル・43MB の Chrome の一時データなどは <code>.gitignore</code>）。</li>
+<li>別の環境（旧 MacBook Pro ＋ Aider）が、軽量化 → ハイスコアなど → 正方形版へ作り替え、の順に push。リポジトリは PUBLIC＋GitHub Pages になった。</li>
+</ul>
+<h3 id="doc-history-2026-08-20-公開のルールの変更と-pr-3">2026-08-20 公開のルールの変更と PR #3</h3>
+<ul>
+<li>ルール: 自分のブランチ → <code>git merge origin/main</code> → PR → main にマージ＝公開。<code>npx wrangler deploy</code> は禁止。</li>
+<li>PR #3 は「hook と settings」だけ Web スレッドが取り込み済み。ゲームのファイルは PR の版のほうが演出が古かったので、閉じた（PR のブランチはその後に削除された。中身はコミット <code>9e6091d</code> として PR #3 から見られる）。</li>
+</ul>
+<h3 id="doc-history-2026-09-11-言語sdk">2026-09-11 言語SDK</h3>
+<ul>
+<li>Web スレッドの依頼（「■ C-3 Fractas」）で配線。先に「正本とポータルの食い違い」を調べた結果、ポータルは <code>6a1e28a</code> と完全に同じ・<code>main</code> は別のゲーム、と分かった。</li>
+<li>ポータル: PR #264。<code>games/fractas/game/hi-game-lang.js</code> を足し、<code>&lt;head&gt;</code> で <code>HiLang.init({ id:'fractas', langs:['en'] })</code>。</li>
+<li><code>main</code>: 同じ配線と、README の同期コマンドの前に警告。</li>
+<li>確かめたこと: <code>node tools/test-game-lang.mjs</code> 47件 pass、手元で JA・KO・EN の切り替え、本番で JA のときの案内と、コンソールにエラーが無いこと、配信（run 34544186983）の success。</li>
+</ul>
+<h3 id="doc-history-2026-09-15-引き継ぎ資料">2026-09-15 引き継ぎ資料</h3>
+<ul>
+<li>性能の低いモデルでも続けられるように、資料（この <code>docs/</code>）・道具（<code>scripts/</code>）・自動で読まれる約束（<code>CLAUDE.md</code>）をそろえた。</li>
+<li>公開中のファイルを、ブランチ <code>portal-radial</code> とタグ <code>portal-live-2026-09-11</code> で取り出せるようにした。</li>
+<li>PINK に、公開中の版を直す専用フォルダ <code>/Volumes/PINK/Development/Fractas-portal-radial/</code>（git の worktree）を作った。<code>main</code> のフォルダを切り替えずに済むので、資料と道具が消えない。</li>
+<li>資料を2つの目で確かめた: 性能の低いモデル（Haiku）に資料だけで作業させて迷うところを洗い出し、別のモデルに事実（コミット・行番号・定数・URL・件数）を実物と突き合わせさせた。見つかった点はすべて直した。</li>
+<li>gamerec に Fractas の台本（<code>games/fractas.mjs</code>）を作り、公開中の版の動画（<code>assets/fractas-radial-preview-2026-09.mp4</code>）を撮った。</li>
+</ul></section></article></div><footer class="foot">この1枚は <code>python3 scripts/build-handoff-html.py</code> で docs/*.md から作ったものです。手で直さず、.md を直して作り直してください。食い違ったら .md と実物（git・本番）が正です。</footer><script>
+(function () {
+  var t = document.querySelector('details.toc');
+  if (t && window.matchMedia && window.matchMedia('(max-width: 1079px)').matches) t.removeAttribute('open');
+})();
+document.querySelectorAll('pre').forEach(function (pre) {
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'copy'; b.textContent = 'コピー';
+  b.addEventListener('click', function () {
+    var c = pre.querySelector('code'); var t = c ? c.innerText : pre.innerText;
+    var done = function () { b.textContent = 'コピーしました'; setTimeout(function () { b.textContent = 'コピー'; }, 1600); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(done, function () { b.textContent = '選んでコピーしてください'; });
+    } else { b.textContent = '選んでコピーしてください'; }
+  });
+  pre.appendChild(b);
+});
+</script>
+</body>
+</html>

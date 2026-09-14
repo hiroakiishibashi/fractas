@@ -1,0 +1,112 @@
+{
+  "schema": "fractas-status/1",
+  "as_of": "2026-09-15",
+  "game_id": "fractas",
+  "note": "機械が読むための状態。人は docs/HANDOFF.md の「0. 30秒でわかる現状」を読む。最新の実物は bash scripts/status.sh で確かめる。",
+  "portal_live": {
+    "version": "radial-turn3",
+    "description": "ターン制の円形マッチ3（12セクター×リング、3手ごとにスキャナー判定、マッチ0で GAME OVER）",
+    "source_branch": "portal-radial",
+    "snapshot_tag": "portal-live-2026-09-11",
+    "base_commit": "6a1e28a",
+    "portal_file": "hiroakiishibashi-web/games/fractas/game/index.html",
+    "portal_page": "https://hiroakiishibashi.com/games/fractas/",
+    "game_url": "https://hiroakiishibashi.com/games/fractas/game/",
+    "last_portal_change": {
+      "pr": 264,
+      "merge_commit": "293bb02",
+      "date": "2026-09-11",
+      "what": "言語SDKの配線"
+    },
+    "lines": 1916,
+    "bytes": 78034,
+    "score_mode": "turn3",
+    "edit_folder": "/Volumes/PINK/Development/Fractas-portal-radial"
+  },
+  "main_branch": {
+    "version": "square-cluster",
+    "description": "正方形のかたまりが中心から育つ。同じ大きさの 2×2 で消える。外枠（±8）に届くと GAME OVER",
+    "head_commit": "a6fb67b",
+    "on_portal": false,
+    "github_pages": "https://hiroakiishibashi.github.io/fractas/",
+    "score_mode": "square_cluster",
+    "lines": 1284
+  },
+  "unpublished_radial_commits": [
+    {
+      "commit": "ce073ce",
+      "what": "古い Mac 向けの軽量化"
+    },
+    {
+      "commit": "d282cb6",
+      "what": "ハイスコア保存・ミュート・GAME OVER 画面の強化"
+    }
+  ],
+  "leaderboard": {
+    "table": "plays",
+    "game_catalog_registered": true,
+    "rows": 65,
+    "top_score": 631360,
+    "top_score_date": "2026-06-05",
+    "issue": "昔の版（エンドレス・60秒）の点と今のターン制の点が混ざっている（DECISIONS D4）"
+  },
+  "language": {
+    "langs": [
+      "en"
+    ],
+    "sdk_file": "hi-game-lang.js",
+    "sdk_source": "hiroakiishibashi-web/sdk/html/hi-game-lang.js",
+    "spec": "https://hiroakiishibashi.com/docs/game-language-spec.md",
+    "wired": "2026-09-11"
+  },
+  "repos": {
+    "fractas": {
+      "url": "https://github.com/hiroakiishibashi/fractas",
+      "visibility": "public",
+      "local": "/Volumes/PINK/Development/Fractas"
+    },
+    "portal": {
+      "url": "https://github.com/hiroakiishibashi/hiroakiishibashi-web",
+      "visibility": "public",
+      "local_warning": "/Volumes/PINK/Development/hiroakiishibashi-web は不整合（2026-09-11）。新しくクローンして作業する"
+    },
+    "dev_notes": {
+      "url": "https://github.com/hiroakiishibashi/dev-notes",
+      "visibility": "private",
+      "files": [
+        "15_fractas.md",
+        "03_projects_overview.md"
+      ]
+    }
+  },
+  "handoff_copies": [
+    "hiroakiishibashi/fractas: docs/ (正本)",
+    "https://hiroakiishibashi.com/docs/handoff/fractas/",
+    "/Volumes/PINK/Development/_handover/2026-09-15/fractas/",
+    "dev-notes: 15_fractas.md",
+    "Claude memory: project_fractas.md",
+    "claude.ai artifact (HTML)"
+  ],
+  "pending_owner_decisions": [
+    "D1",
+    "D2",
+    "D3",
+    "D4",
+    "D5"
+  ],
+  "do_not": [
+    "main をオーナーの了承なしにポータルへ写す",
+    "hi-game-lang.js の中身を書き換える",
+    "ゲームから preferred_lang を書く",
+    "npx wrangler deploy を直接叩く",
+    "git add -A / git add . を使う",
+    "作りかけをポータルの main に入れる",
+    "秘密の値・個人のメールアドレスを書く"
+  ],
+  "media": {
+    "gamerec_script": "/Volumes/PINK/Development/tools/gamerec/games/fractas.mjs",
+    "preview_2026_09": "assets/fractas-radial-preview-2026-09.mp4",
+    "thumbnail_2026_06": "assets/thumbnail.jpg",
+    "portal_keyvisual": "hiroakiishibashi-web/assets/games/keyvisuals/variants/fractas-hero-b.jpg"
+  }
+}

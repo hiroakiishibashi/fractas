@@ -1,5 +1,11 @@
 # Fractas
 
+> 🔴 **Read first: [CLAUDE.md](CLAUDE.md) and [docs/HANDOFF.md](docs/HANDOFF.md)** (handover, 2026-09-15).
+> `main` holds the unpublished **square-cluster** prototype (served only on GitHub Pages).
+> The game live on hiroakiishibashi.com is the **radial** version on branch **`portal-radial`**
+> (tag `portal-live-2026-09-11`). The description below is about the radial version.
+
+
 A turn-based **radial match‑3** score game. The board is a polar grid of 12 sectors
 and concentric rings that slowly expand outward from a central core. Rotate a ring
 or slide a sector to line up **3+ same‑colored** blocks. Every 3 valid moves, the
@@ -42,18 +48,22 @@ An auto‑dismissing hint overlay explains this on first load.
 ## Project structure
 
 ```
-Fractas/
-├── index.html            # Canonical game source (playable standalone)
+Fractas/  (branch main = square-cluster prototype; branch portal-radial = the live radial game)
+├── index.html            # the game (on main: square version)
+├── hi-game-lang.js       # portal language SDK, byte-identical copy — never edit
+├── CLAUDE.md             # rules Claude Code loads automatically
+├── docs/                 # handover (Japanese): HANDOFF, RUNBOOK, PITFALLS, DECISIONS, PROMPTS, CODEMAP, HISTORY, handoff.html
+├── scripts/              # status.sh, sync-to-portal.sh, gen-codemap.py, build-handoff-html.py
 ├── README.md
 └── assets/
-    ├── thumbnail.jpg          # 1280×720 portal thumbnail (radial art)
-    ├── fractas-preview.mp4     # ~15s gameplay clip (H.264, web-ready)
-    └── fractas-preview.webm    # ~15s gameplay clip (VP9)
+    ├── thumbnail.jpg          # 1280×720 (2026-06, radial art)
+    ├── fractas-preview.mp4     # ~15s gameplay clip (2026-06 version)
+    └── fractas-preview.webm
 ```
 
-`index.html` is the **single source of truth**. The copy deployed to the game portal
-lives at `hiroakiishibashi-web/games/fractas/game/index.html` and must be kept in sync
-(see below).
+The copy deployed to the game portal comes from branch **`portal-radial`** (not `main`). It
+lives at `hiroakiishibashi-web/games/fractas/game/index.html`; copy it with
+`scripts/sync-to-portal.sh` (see docs/RUNBOOK.md R2).
 
 ---
 
@@ -65,8 +75,8 @@ score leaderboard.
 - **game_id:** `fractas`
 - **Wrapper page:** `hiroakiishibashi-web/games/fractas/index.html`
   (iframe + login prompt + TOP 5 + full‑ranking modal — adapted from the Block Slide wrapper)
-- **Game iframe:** `hiroakiishibashi-web/games/fractas/game/index.html` (copy of this `index.html`)
-- **Thumbnail:** `hiroakiishibashi-web/assets/games/fractas.jpg`
+- **Game iframe:** `hiroakiishibashi-web/games/fractas/game/index.html` (copy of branch `portal-radial`)
+- **Key visual:** `hiroakiishibashi-web/assets/games/keyvisuals/variants/fractas-hero-b.jpg` (older thumbnail: `assets/games/fractas.jpg`)
 - **Preview video:** `hiroakiishibashi-web/assets/games/fractas-preview.{mp4,webm}`
 
 ### Score reporting (leaderboard)
@@ -111,27 +121,22 @@ still plays; a single console warning is logged).
 ### Registered in
 
 - `index.html` — Games grid card
-- `js/user-ui.js` — `GAMES` registry + `GAME_LABELS_FOR_CARD`
-- `js/i18n.js` — `game.fractas.desc`, `game.fractas.how`, `tag.arcade` (EN + JA)
+- `js/user-ui.js` — `GAMES` registry + label map
+- Supabase `game_catalog` — `fractas` (enabled)
+- `js/i18n/{en,ja,ko,es,pt,zh}.js` — `game.fractas.desc`, `game.fractas.how`
 - `leaderboard/index.html` — game tab
 
-### Sync command (dev → portal)
+### Publishing to the portal
 
-> ⚠️ **Read before syncing (2026-09-11).** On 2026-07-27 `main` pivoted to an unpublished
-> square-cluster prototype (`3b3c201` onward). The portal still runs the turn-based radial
-> version: commit `6a1e28a` plus the language wiring. **Running the command below replaces the
-> published game** (and its leaderboard) — get the owner's OK first.
->
-> `hi-game-lang.js` is the portal language SDK (`docs/game-language-spec.md` in
-> hiroakiishibashi-web). Always copy it together with `index.html`, byte-for-byte unchanged —
-> `node tools/test-game-lang.mjs` fails if the bundled copy drifts from the SDK.
-
-After editing the canonical `index.html`, copy it into the portal:
+The portal copy comes from branch **`portal-radial`**, never from `main` (`main` is a different game).
+Copy with the guarded helper, then publish through a PR in hiroakiishibashi-web (merge = deploy):
 
 ```bash
-cp /Volumes/PINK/Development/Fractas/{index.html,hi-game-lang.js} \
-   /Volumes/PINK/Development/hiroakiishibashi-web/games/fractas/game/
+bash scripts/sync-to-portal.sh <fresh clone of hiroakiishibashi-web>    # copies portal-radial; refuses to swap versions
 ```
+
+Copy-paste steps (Japanese): `docs/RUNBOOK.md` R2. `hi-game-lang.js` must stay byte-identical to the portal SDK
+(`node tools/test-game-lang.mjs` in hiroakiishibashi-web checks it). Never run `npx wrangler deploy`.
 
 ---
 
@@ -153,4 +158,4 @@ npx serve -l 3459 /Volumes/PINK/Development/Fractas
 - Cloud‑save (resume best score / theme) could be added via the portal's
   `GAME_REQUEST_RESTORE` / `GAME_SAVE_DATA` protocol — see
   `hiroakiishibashi-web/docs/cloud-save-spec.md`.
-- Could be submitted to CrazyGames / Playgama later (add their SDK + a `Playgama_Config.json`).
+- Owner policy (2026-09-03): do not add links to monetization game platforms on the portal.

@@ -1,3 +1,7 @@
+> ⚠️ 2026-09-15 追記: この文書は 2026-07-26 に別の環境（旧 MacBook Pro ＋ Aider）で書かれたもので、
+> **ゲームの説明がラジアル版のまま**です（`main` はその後、正方形版に作り替えられました）。
+> 最新の引き継ぎは **[docs/HANDOFF.md](docs/HANDOFF.md)** と **[CLAUDE.md](CLAUDE.md)** を読んでください。
+
 # 🎮 GAME DEVELOPMENT MEMORY & HANDOVER DOCUMENT
 **Project**: Fractas (フラクタス)  
 **Author**: Hiroaki Ishibashi (@hiroakiishibashi)  
